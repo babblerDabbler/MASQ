@@ -1,3 +1,4 @@
+
 // cards.js
 
 import { scene, cardBackMaterial } from "./threeSetup.js";
@@ -76,7 +77,8 @@ export const cardSets = [
             { id: 66, name: "Dust Indexer", cost: 1, attack: 0, health: 1, ability: "Draw 1 card. If it costs 1, draw another.", texture: "/cards/a66.webp", weight: 4, lore: "Rummages through the detritus of the ledger, sifting for overlooked value." },
             { id: 67, name: "Node Librarian", cost: 4, attack: 2, health: 3, ability: "Draw 2 cards. If both are unique types, gain +1 mana next turn.", texture: "/cards/a67.webp", weight: 3, lore: "Curates the knowledge of every node, connecting ideas across fractured data streams." },
             { id: 68, name: "Hyperledger Oracle", cost: 7, attack: 4, health: 6, ability: "Draw 3 cards. If any of those 3 cards is a draw card, draw number of cards equal to the first draw card again.", texture: "/cards/a68.webp", weight: 1, lore: "Its memory spans every fork, recalling futures where knowledge becomes cheaper." },
-            { id: 74, name: "Bonk Pup", cost: 0, attack: 5, health: 3, ability: "Battlecry: Draw a card. If it costs 2 or less, gain +1 Attack this turn.", texture: "/cards/a69.webp", weight: 4,lore: "A scrappy Solana street pup, scrounging dust and sparking community chaos."}
+            { id: 74, name: "Bonk Pup", cost: 0, attack: 5, health: 3, ability: "Battlecry: Draw a card. If it costs 2 or less, gain +1 Attack this turn.", texture: "/cards/a69.webp", weight: 4,lore: "A scrappy Solana street pup, scrounging dust and sparking community chaos."},
+            { id: 75, name: "Pump.fun Meme Forge", cost: 10, attack: 10, health: 10, ability: "Battlecry: Create two 1‑cost Meme Tokens with 5/5 stats (vanish at end of turn).", texture: "/cards/a71.webp", weight: 1, lore: "A turbocharged minting rig spewing meme monsters in waves, burning bright before the dump."}
         ],
   },
   {
@@ -91,6 +93,18 @@ export const cardSets = [
   ],
   },
   ]
+
+export const memeToken = {
+  id: 999,
+  name: "Meme Token",
+  cost: 1,
+  attack: 5,
+  health: 5,
+  ability: "Ephemeral: Vanishes after one turn.",
+  texture: "/cards/a71.webp",
+  weight: 0,
+  lore: "Short-lived. Meme-ified. Market fodder."
+};
 
 // --- Shader Code (inline for browser compatibility) ---
 const vertexShader = `
