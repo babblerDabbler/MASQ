@@ -6,6 +6,7 @@ import { scene, camera, renderer } from './threeSetup.js';
 import { updateUI, log, initUIEvents, hideGameUI } from './ui.js';
 import { supabase } from './supabaseClient.js';
 import { getUserStats, updateUserStats, ensureUserInDB } from './auth.js';
+import { memeToken } from './cards.js';
 
 export const gameState = {
   player: { health: 30, maxHealth: 30, mana: 1, maxMana: 1, deck: [], hand: [], queuedCards: [], playedCards: [], winStreak: 0, drawCount: 0, totalWins: 0, totalLosses: 0 },
@@ -557,6 +558,13 @@ export function resolveTurn() {
             log("Bonk Pup draws, but no bonus this time.");
           }
         }
+        if (card.data.name === "Pump.fun Meme Forge") {
+          for (let i = 0; i < 2; i++) {
+            const memeCard = new Card({ ...memeToken }, true);
+            gameState.player.queuedCards.push(memeCard);
+            log("Pump.fun Meme Forge spawns a Meme Token!");
+          }
+        }
       }
 
       gameState.opponent.health -= attack;
@@ -700,6 +708,13 @@ export function resolveTurn() {
             log("Bonk Pup draws, but no bonus this time.");
           }
         }
+        if (card.data.name === "Pump.fun Meme Forge") {
+          for (let i = 0; i < 2; i++) {
+            const memeCard = new Card({ ...memeToken }, false);
+            gameState.opponent.queuedCards.push(memeCard);
+            log("Opponent’s Pump.fun Meme Forge spawns a Meme Token!");
+          }
+        }
       }
 
       gameState.player.health -= attack;
@@ -714,6 +729,9 @@ export function resolveTurn() {
 
     gameState.player.queuedCards = [];
     gameState.opponent.queuedCards = [];
+
+    gameState.player.playedCards = gameState.player.playedCards.filter(c => c.data.name !== "Meme Token");
+    gameState.opponent.playedCards = gameState.opponent.playedCards.filter(c => c.data.name !== "Meme Token");
 
     updateBoard();
     log("Turn resolved, checking game over state");
