@@ -6,6 +6,7 @@
     { "source": "/roadmap", "destination": "/roadmap.html" },
     { "source": "/buy", "destination": "/buy.html" },
     { "source": "/holders", "destination": "/holders.html" },
-    { "source": "/leaders", "destination": "/leaders.html" }
+    { "source": "/leaders", "destination": "/leaders.html" },
+    { "source": "/terminal", "destination": "/terminal.html" }
   ]
 }
