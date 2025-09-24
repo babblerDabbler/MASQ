@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MASQ Terminal</title>
+  <link rel="icon" type="image/png" href="/assets/logomasq1-g11o.gif" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto:wght@400;700&family=Cinzel:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background: black;
+      overflow: hidden;
+    }
+
+    video.video-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: -1;
+      opacity: 0.75;
+    }
+
+    .header {
+      background: url('https://cdn.glitch.global/9bc8dda2-a128-422d-9b7a-5839e2af8c3b/banner_skelF22.gif') no-repeat center center;
+      background-size: cover;
+      height: 7vh;
+      width: 100%;
+      position: fixed;
+      top: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      box-shadow: 0 0 10px #FF0000;
+      border-bottom: 10px solid transparent;
+      border-image: url('https://cdn.glitch.global/7b91c8dc-0f09-40c5-90d2-26cac98db2c2/button2.gif') 300 round;
+    }
+
+    .logo {
+      height: 40px;
+    }
+
+    .title-container {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.2rem;
+      color: #FFD700;
+      text-shadow: 0 0 5px #FF0000;
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      color: #FF4500;
+    }
+
+    .terminal-container {
+      margin-top: 10vh;
+      max-width: 800px;
+      height: 75vh;
+      background: rgba(0, 0, 0, 0.7);
+      border: 20px solid transparent;
+      border-image: url('/assets/button2.png') 300 round;
+      border-radius: 16px;
+      box-shadow: 0 0 20px #FFD700, inset 0 0 10px rgba(255, 0, 0, 0.3);
+      margin-left: auto;
+      margin-right: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      backdrop-filter: blur(5px);
+    }
+
+    .chat-log {
+      flex: 1;
+      overflow-y: auto;
+      color: #FFD700;
+      font-family: monospace;
+      font-size: 14px;
+      padding: 10px;
+      line-height: 1.5;
+      text-shadow: 0 0 4px #FF0000;
+      border-bottom: 1px solid rgba(255, 0, 0, 0.2);
+    }
+
+    .chat-input {
+      display: flex;
+      margin-top: 12px;
+    }
+
+    .chat-input input {
+      flex: 1;
+      background: black;
+      color: #FFD700;
+      border: 1px solid #FF0000;
+      border-radius: 6px;
+      padding: 8px;
+      font-family: monospace;
+      font-size: 14px;
+      outline: none;
+      text-shadow: 0 0 3px #FF4500;
+    }
+
+    .chat-input button {
+      margin-left: 10px;
+      background: #FF0000;
+      color: #FFD700;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-weight: bold;
+      box-shadow: 0 0 10px #FF0000;
+      cursor: pointer;
+    }
+
+    .chat-input button:hover {
+      background: #FFD700;
+      color: #000;
+      box-shadow: 0 0 15px #FFD700;
+    }
+
+    #streaming-timer {
+      position: fixed;
+      top: 100px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 8px 16px;
+      border-radius: 12px;
+      border: 2px solid #FFD700;
+      box-shadow: 0 0 10px #FF0000;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+      color: #FFD700;
+      z-index: 1100;
+      text-align: center;
+      text-shadow: 0 0 4px #FF4500;
+    }
+
+    #streaming-timer .label {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+      color: #FF4500;
+      text-shadow: 0 0 4px #FFD700;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background video -->
+  <video class="video-bg" autoplay muted loop playsinline>
+    <source src="/assets/MASQ1.webm" type="video/webm" />
+  </video>
+
+  <!-- Header -->
+  <div class="header">
+    <a href="/">
+      <img src="/assets/logomasq1-g11o.gif" alt="Logo" class="logo" />
+    </a>
+    <div class="title-container">
+      <div class="title glow">the MASQuerades</div>
+      <div class="subtitle">$MASQ</div>
+    </div>
+  </div>
+
+  <!-- Timer -->
+  <div id="streaming-timer">
+    <span class="label">Streaming since</span>
+    <span id="timer">00:00:00</span>
+  </div>
+
+  <!-- Terminal -->
+  <main>
+    <div class="terminal-container">
+      <div class="chat-log" id="chatLog">
+        <p>> Welcome to the MASQ Terminal.</p>
+        <p>> This is the dev @babbler_dabbler...</p>
+        <p>> a new wave of how a dev can launch a project live by streaming. 
+
+After 4 months of development and one failed launch due to server issues (inside 2 mins of launch), MASQuerades the game is live now on Pump fun.
+
+And no, this is not a “hey look what I found” memecoin. This is an original strategic card game built on the Solana blockchain created from scratch and fully opensourced.
+
+The game store is already live, using $MASQ as ingame currency to buy packs.
+
+Shadowed speculators, silent victors, and ma degenerates… welcome to the stage.</p>
+      </div>
+      <div class="chat-input">
+        <input type="text" id="chatInput" placeholder="Type your message here..." />
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script>
+    function sendMessage() {
+      const input = document.getElementById("chatInput");
+      const log = document.getElementById("chatLog");
+      const text = input.value.trim();
+      if (!text) return;
+
+      const line = document.createElement("p");
+      line.textContent = `> ${text}`;
+      log.appendChild(line);
+      input.value = "";
+      log.scrollTop = log.scrollHeight;
+    }
+
+    document.getElementById("chatInput").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") sendMessage();
+    });
+
+    // Streaming timer
+    window.addEventListener("DOMContentLoaded", () => {
+      const timerDisplay = document.getElementById("timer");
+      let secondsElapsed = 0;
+
+      function updateTimer() {
+        secondsElapsed++;
+        const hrs = String(Math.floor(secondsElapsed / 3600)).padStart(2, '0');
+        const mins = String(Math.floor((secondsElapsed % 3600) / 60)).padStart(2, '0');
+        const secs = String(secondsElapsed % 60).padStart(2, '0');
+        timerDisplay.textContent = `${hrs}:${mins}:${secs}`;
+      }
+
+      setInterval(updateTimer, 1000);
+    });
+  </script>
+</body>
+</html>
