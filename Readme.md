@@ -6,7 +6,7 @@
 
 ![MASQ Logo](/assets/00banner11.gif)
 
-CA: 8rup3TJ1mTw3NHui77BFfoG4WoD1PXaijxnFqzh2pump
+CA: 
 
 ---
 
