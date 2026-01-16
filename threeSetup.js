@@ -2,7 +2,7 @@
 const textureLoader = new THREE.TextureLoader();
 
 export const cardBackMaterial = new THREE.MeshStandardMaterial({
-  map: textureLoader.load('https://cdn.glitch.global/788f42e8-9acb-41a1-a609-68bac1d03837/back1.png?v=1743024295227'),
+  map: textureLoader.load('/assets/back1.png'),
   side: THREE.DoubleSide
 });
 
@@ -27,7 +27,7 @@ export const renderer = new THREE.WebGLRenderer({
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
 
-scene.background = textureLoader.load('https://cdn.glitch.global/788f42e8-9acb-41a1-a609-68bac1d03837/bgbg2.png');
+scene.background = textureLoader.load('/assets//bgbg2.png');
 
 
 const ambientLight = new THREE.AmbientLight(0xFFFFFF, 1);
