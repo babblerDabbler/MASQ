@@ -186,7 +186,7 @@ lore: "Forged from every chain, born of every whisper, the masked Singularity de
   cost: 9,
   attack: 10,
   health: 10,
-  texture: "https://cdn.glitch.global/.../a73.png",
+  texture: "/cards/a73.png",
   weight: 0,
   lore: "A colossus of molten value, towering over the blockchain’s shifting sands."
 }
