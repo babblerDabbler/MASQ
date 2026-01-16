@@ -136,9 +136,9 @@ export async function initializeGame() {
     .flatMap(set => set.cards);
   
   const imagesToLoad = [
-    'https://cdn.glitch.global/788f42e8-9acb-41a1-a609-68bac1d03837/back1.png',
-    'https://cdn.glitch.global/788f42e8-9acb-41a1-a609-68bac1d03837/bgbg2.png',
-    'https://cdn.glitch.global/788f42e8-9acb-41a1-a609-68bac1d03837/bgbg1.png',
+    '/assets/back1.png',
+    '/assets/bgbg2.png',
+    '/assets//bgbg1.png',
     ...availableCards.map(card => card.texture)
   ];
 
