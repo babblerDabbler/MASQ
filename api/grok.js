@@ -29,7 +29,7 @@ export default async function handler(req, res) {
             "content": prompt
           }
         ],
-        "model": "grok-2-latest",
+        "model": "grok-4-1-fast-reasoning",
         "stream": false,
         "temperature": 0.7
       })
