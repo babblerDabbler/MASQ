@@ -2,7 +2,12 @@
 
 import { supabase } from './supabaseClient.js';
 
-export async function signUp(email, password) {
+function usernameToEmail(username) {
+  return `${username.toLowerCase()}@masq.com`;
+}
+
+export async function signUp(username, password) {
+  const email = usernameToEmail(username);
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email,
     password,
@@ -24,7 +29,8 @@ export async function signUp(email, password) {
   }
 }
 
-export async function login(email, password) {
+export async function login(username, password) {
+  const email = usernameToEmail(username);
   const { data: loginData, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -38,7 +44,7 @@ export async function login(email, password) {
   const user = loginData?.user || null;
 
   if (user) {
-    await ensureUserInDB(user.id, email);
+    await ensureUserInDB(user.id, username);
     // Fetch the username from the users table
     const { data: userData, error: fetchError } = await supabase
       .from('users')
@@ -129,7 +135,7 @@ export async function updateUserStats(userId, wins, losses, streak) {
   return true;
 }
 
-export async function ensureUserInDB(userId, email) {
+export async function ensureUserInDB(userId, username) {
   console.log(`Checking if user ${userId} exists in DB`);
   if (userId.startsWith('guest_')) {
     console.log("Guest mode: No database entry created");
@@ -151,7 +157,7 @@ export async function ensureUserInDB(userId, email) {
     return;
   }
 
-  const defaultUsername = email.split('@')[0] + '_' + Math.floor(Math.random() * 1000);
+  const defaultUsername = username;
   console.log(`User ${userId} not found, creating with username: ${defaultUsername}`);
   const { data, error } = await supabase
     .from('users')
