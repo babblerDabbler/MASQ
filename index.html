@@ -151,7 +151,7 @@
     <canvas id="gameCanvas" style="display: none;"></canvas>
     <div class="auth-panel" id="authPanel" style="display: none;">
         <h2>Signup / Login / Play as Guest</h2>
-        <input type="email" id="email" placeholder="Email"/>
+        <input type="text" id="username" placeholder="Username" autocomplete="off"/>
         <input type="password" id="password" placeholder="Password"/>
         <div class="auth-buttons">
             <button onclick="handleSignup()">Sign Up</button>
@@ -159,9 +159,6 @@
             <button onclick="handleGuestPlay()">Guest</button>
         </div>
       <br>
-              <p style="font-size: 0.8rem; color: #aaa; margin-top: 0.5rem;">
-                  * Email confirmation not required. Treat like username in email format
-              </p>
     </div>
     <div id="postLogin" class="post-login" style="display: none;">
         <h2 id="welcomeMessage" class="post-login-title">Welcome, Anon</h2>
@@ -317,10 +314,10 @@
 
 
         window.handleSignup = async function() {
-            const email = document.getElementById("email").value;
+            const username = document.getElementById("username").value.trim();
             const password = document.getElementById("password").value;
             try {
-                const result = await signUp(email, password);
+                const result = await signUp(username, password);
                 if (result?.error) {
                     alert("Signup failed: " + result.error.message);
                     return;
@@ -331,11 +328,11 @@
         };
 
         window.handleLogin = async function() {
-            const email = document.getElementById("email").value;
+            const username = document.getElementById("username").value.trim();
             const password = document.getElementById("password").value;
             try {
                 showLoadingScreen("Loading User Stats...");
-                const result = await login(email, password);
+                const result = await login(username, password);
                 if (result?.error || !result?.user) {
                     hideLoadingScreen();
                     alert("Login failed: " + (result?.error?.message || "Invalid credentials."));
