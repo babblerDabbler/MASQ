@@ -7,6 +7,7 @@
     { "source": "/buy", "destination": "/buy.html" },
     { "source": "/holders", "destination": "/holders.html" },
     { "source": "/leaders", "destination": "/leaders.html" },
-    { "source": "/terminal", "destination": "/terminal.html" }
+    { "source": "/terminal", "destination": "/terminal.html" },
+    { "source": "/signing", "destination": "/signing.html" }
   ]
 }
