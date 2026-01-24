@@ -1,4 +1,43 @@
-/* style.css */
+/* =============================================================================
+   MASQUERADES - ORGANIZED STYLESHEET
+   =============================================================================
+   This stylesheet is organized into logical components with comments indicating
+   which pages use each section.
+   
+   TABLE OF CONTENTS:
+   1.  GLOBAL STYLES & RESET (All Pages)
+   2.  LOADING SCREEN (index.html, signing.html)
+   3.  VIDEO BACKGROUND (All Pages)
+   4.  HEADER & NAVIGATION (All Pages)
+   5.  BUTTONS - GLOBAL (All Pages)
+   6.  HOMEPAGE - TYPEWRITER & INTRO (index.html)
+   7.  HOMEPAGE - CA LINE & COPY (index.html)
+   8.  HOMEPAGE - NAVIGATION NAVBAR (index.html)
+   9.  HOMEPAGE - ANGLED BUTTON GROUP (index.html)
+   10. HOMEPAGE - CARD CONTAINER & LABELS (index.html)
+   11. HOMEPAGE - NOTIFICATION WIDGET (index.html)
+   12. AUTHENTICATION PANEL (signing.html, buy.html)
+   13. POST-LOGIN SCREEN (signing.html)
+   14. GAME UI - OVERLAY & INFO PANELS (signing.html - game mode)
+   15. GAME UI - HEALTH & MANA BARS (signing.html - game mode)
+   16. GAME UI - BUTTONS (signing.html - game mode)
+   17. GAME UI - GAME LOG (signing.html - game mode)
+   18. GAME UI - TOOLTIPS (signing.html - game mode)
+   19. GAME UI - TIMER (signing.html - game mode)
+   20. GAME UI - STATS & GAME OVER (signing.html - game mode)
+   21. GAME CANVAS & COUNTDOWN (signing.html - game mode)
+   22. CONTENT PAGES - MAIN & TYPOGRAPHY (about.html, whitepaper.html, roadmap.html, cards.html)
+   23. MUTE TOGGLE (index.html, signing.html)
+   24. LOADING SPINNER (buy.html)
+   25. GLOBAL ANIMATIONS
+   26. RESPONSIVE - MOBILE (max-width: 768px)
+   ============================================================================= */
+
+
+/* =============================================================================
+   1. GLOBAL STYLES & RESET
+   Used by: ALL PAGES
+   ============================================================================= */
 
 body {
   margin: 0;
@@ -21,6 +60,12 @@ body {
   position: relative;
   display: block;
 }
+
+
+/* =============================================================================
+   2. LOADING SCREEN
+   Used by: index.html, signing.html
+   ============================================================================= */
 
 .loading-screen {
   position: fixed;
@@ -48,6 +93,12 @@ body {
   margin-top: 20px;
 }
 
+
+/* =============================================================================
+   3. VIDEO BACKGROUND
+   Used by: ALL PAGES
+   ============================================================================= */
+
 .video-bg {
   position: fixed;
   top: 0;
@@ -56,12 +107,18 @@ body {
   height: 100%;
   z-index: -1;
   object-fit: cover;
-  opacity: 0.3;
+  opacity: 0.4;
 }
+
+
+/* =============================================================================
+   4. HEADER & NAVIGATION
+   Used by: ALL PAGES
+   ============================================================================= */
 
 .header {
   background: url('/assets/banner_skelF22.gif') no-repeat center center;
-  background-size: cover; /* make sure it covers the whole header */
+  background-size: cover;
   height: 7vh;
   width: 100%;
   position: fixed;
@@ -71,7 +128,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  box-shadow: 0 0 10px #FF0000;
+  /* box-shadow: 0 0 10px #FF0000; */
 }
 
 .logo {
@@ -93,8 +150,8 @@ body {
   font-family: 'Orbitron', sans-serif;
   text-shadow: 0 0 10px #FF0000;
   margin: 0;
-  border: 10px solid transparent;
-  border-image: url('/assets/button2.png') 300 round;
+  /* border: 10px solid transparent;
+  border-image: url('/assets/button2.png') 300 round; */
 }
 
 .subtitle {
@@ -104,6 +161,51 @@ body {
   margin-left: 10px;
 }
 
+/* Home Link - Used in content pages */
+.home-link {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  color: #FFD700;
+  font-family: 'Orbitron', sans-serif;
+  text-decoration: none;
+  text-shadow: 0 0 5px #FF0000;
+}
+
+.home-link:hover {
+  color: #FF0000;
+  text-shadow: 0 0 10px #FFD700;
+}
+
+
+/* =============================================================================
+   5. BUTTONS - GLOBAL
+   Used by: ALL PAGES
+   ============================================================================= */
+
+button {
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  color: #FFD700;
+  background: linear-gradient(145deg, #2B2B2B, #3C3C3C);
+  border: 1px solid #FF0000;
+  border-radius: 8px;
+  padding: 8px 18px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.15);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.4), 0 0 25px rgba(255, 69, 0, 0.2);
+  background: linear-gradient(145deg, #3C3C3C, #4A4A4A);
+}
+
+/* Connect Button Container */
 .connect-container {
   position: fixed;
   bottom: 20px;
@@ -164,74 +266,11 @@ body {
   color: #fff;
 }
 
-@keyframes pulseGlow {
-  0% {
-    box-shadow: 0 0 5px #FFD700, 0 0 10px #FF0000;
-  }
-  100% {
-    box-shadow: 0 0 15px #FFD700, 0 0 25px #FF0000;
-  }
-}
 
-@keyframes glowFlicker {
-  0% {
-    opacity: 0.2;
-    transform: rotate(30deg) scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: rotate(30deg) scale(1.05);
-  }
-  100% {
-    opacity: 0.2;
-    transform: rotate(30deg) scale(1);
-  }
-}
-
-
-@keyframes pulseGlow {
-  0% { box-shadow: 0 0 5px #FF0000, 0 0 10px #FF4500; }
-  50% { box-shadow: 0 0 10px #FF0000, 0 0 20px #FF4500, 0 0 30px #FFD700; }
-  100% { box-shadow: 0 0 5px #FF0000, 0 0 10px #FF4500; }
-}
-
-.marquee {
-  position: absolute;
-  top: 7vh;
-  width: 100%;
-  background: rgba(255, 0, 0, 0.1);
-  color: #FFD700;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 24px;
-  white-space: nowrap;
-  overflow: hidden;
-  border-bottom: 1px solid #FF0000;
-}
-
-.marquee div {
-  display: inline-block;
-}
-
-.marquee span {
-  display: inline-block;
-  padding-right: 50px;
-}
-
-@keyframes marquee-scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-100%); }
-}
-
-.border-green {
-  position: absolute;
-  border-style: solid;
-  border-color: #FF0000;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 999;
-}
+/* =============================================================================
+   6. HOMEPAGE - TYPEWRITER & INTRO
+   Used by: index.html
+   ============================================================================= */
 
 .typewriter-container {
   margin-top: 10vh;
@@ -252,21 +291,28 @@ body {
   animation: glow-animation 1.5s ease-in-out infinite alternate;
 }
 
-@keyframes glow-animation {
-  0% { text-shadow: 0 0 5px #FF0000; }
-  50% { text-shadow: 0 0 10px #FF0000, 0 0 15px #FF4500; }
-  100% { text-shadow: 0 0 5px #FF0000; }
-}
-
 .cursor {
   border-right: 2px solid #FF0000;
   animation: cursor-blink 0.5s infinite;
 }
 
-@keyframes cursor-blink {
-  0% { border-color: #FF0000; }
-  50% { border-color: transparent; }
+/* Border decoration */
+.border-green {
+  position: absolute;
+  border-style: solid;
+  border-color: #FF0000;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
 }
+
+
+/* =============================================================================
+   7. HOMEPAGE - CA LINE & COPY
+   Used by: index.html
+   ============================================================================= */
 
 .ca-line {
   padding: 2px 8px;
@@ -287,15 +333,11 @@ body {
   color: #00FF00;
 }
 
-.controls-text {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  color: #FFD700;
-  font-size: 14px;
-  font-family: 'Roboto', sans-serif;
-  text-shadow: 0 0 5px #FF0000;
-}
+
+/* =============================================================================
+   8. HOMEPAGE - NAVIGATION NAVBAR
+   Used by: index.html
+   ============================================================================= */
 
 .clickable-word {
   color: #FF0000;
@@ -321,69 +363,155 @@ body {
   text-shadow: 0 0 10px #FFD700;
 }
 
-.tokenomics-popup {
-  display: none;
-  position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.9);
-  border: 2px solid #FF0000;
-  border-radius: 8px;
-  padding: 15px;
-  width: 300px;
-  z-index: 1002;
-  box-shadow: 0 0 15px #FF0000;
+.masq-navbar {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 24px;
 }
 
-.tokenomics-title {
-  color: #FF0000;
-  font-size: 20px;
-  font-family: 'Orbitron', sans-serif;
-  text-shadow: 0 0 10px #FF0000;
-  margin-bottom: 10px;
-}
-
-.tokenomics-subtitle {
-  color: #FFD700;
-  font-size: 16px;
-  font-family: 'Orbitron', sans-serif;
-  text-shadow: 0 0 5px #FF0000;
-  margin: 10px 0 5px 0;
-}
-
-.tokenomics-text {
-  color: #FFD700;
-  font-size: 14px;
-  font-family: 'Roboto', sans-serif;
-  text-shadow: 0 0 5px #FF0000;
-  margin: 5px 0;
-}
-
-.tokenomics-link {
-  color: #FF0000;
-  text-decoration: underline;
+.nav-link {
   cursor: pointer;
-  transition: color 0.3s;
-}
-
-.tokenomics-link:hover {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  position: relative;
+  font-weight: bold;
+  grid-row-start: 1;
+  grid-column-start: 1;
+  font-size: 1.2rem;
+  --stack-height: calc(100% / var(--stacks) - 1px);
+  --inverse-index: calc(calc(var(--stacks) - 1) - var(--index));
+  --clip-top: calc(var(--stack-height) * var(--index));
+  --clip-bottom: calc(var(--stack-height) * var(--inverse-index));
+  clip-path: inset(var(--clip-top) 0 var(--clip-bottom) 0);
+  animation: stack 340ms cubic-bezier(.46,.29,0,1.24) 1 backwards calc(var(--index) * 20ms), glitch 2s ease infinite 2s alternate-reverse;
   color: #FFD700;
-  text-shadow: 0 0 10px #FFD700;
+  background-image: url('/assets/button_f.png');
+  background-size: cover;
+  background-position: center;
 }
 
-.top-right-gif {
+.nav-link span:nth-child(odd) { --glitch-translate: 10px; }
+.nav-link span:nth-child(even) { --glitch-translate: -10px; }
+
+.nav-link:hover {
+  color: white;
+  text-shadow: 0 0 6px red;
+}
+
+
+/* =============================================================================
+   9. HOMEPAGE - ANGLED BUTTON GROUP
+   Used by: index.html
+   ============================================================================= */
+
+.angled-btn-group {
   position: absolute;
-  bottom: -50px;
-  right: -10px;
-  width: 500px;
-  z-index: -1;
+  top: 80%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  margin: 0;
+  padding: 0;
+  z-index: 1001;
+  font-family: 'Orbitron', sans-serif;
 }
 
-.binance-widget-marquee {
-  margin-top: 10px;
+.angled-btn-group li {
+  list-style: none;
+  margin: 0 30px;
 }
 
+.angled-btn-group li a {
+  text-decoration: none;
+  display: block;
+  width: 120px;
+  height: 100px;
+  text-shadow: 0 0 5px #FF0000;
+  color: #FFD700; 
+  text-align: left;
+  padding-left: 30px;
+  transform: rotate(0deg) skew(5deg);
+  transition: 0.5s;
+  box-shadow: inset 0 0 10px #000, 0 0 10px #FFD700;
+  border: 2px solid red;
+  border-radius: 12px;
+  position: relative;
+  background: url('/assets/button2.gif') no-repeat center center / cover;
+}
+
+.angled-btn-group li a:before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: -20px;
+  height: 100%;
+  width: 20px;
+  background: none;
+  border: 2px solid red;
+  border-radius: 12px;
+  transform: skewY(-45deg);
+  background: url('/assets/button2.gif') no-repeat center center / cover;
+}
+
+.angled-btn-group li a:after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: -10px;
+  height: 20px;
+  width: 100%;
+  background: none;
+  border: 2px solid red;
+  border-radius: 12px;
+  transform: skewX(-45deg);
+  background: url('/assets/button2.gif') no-repeat center center / cover;
+}
+
+.angled-btn-group li a i {
+  font-size: 28px;
+  color: white;
+  line-height: 80px;
+  transition: 0.5s;
+  padding-right: 14px;
+  display: inline-block;
+}
+
+.angled-btn-group li a span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0 10px;
+  margin: 0;
+  color: white;
+  letter-spacing: 4px;
+  transition: 0.5s;
+  text-shadow: 2px 2px red;
+  font-size: 15px;
+}
+
+.angled-btn-group li a:hover {
+  transform: rotate(0deg) skew(5deg) translate(20px, -15px);
+  box-shadow: -50px 50px 50px rgba(0, 0, 0, 0.5);
+  background: url('/assets/button2.gif') no-repeat center center / cover;
+}
+
+.angled-btn-group li a:hover i,
+.angled-btn-group li a:hover span {
+  box-shadow: -50px 50px 50px rgba(0, 0, 0, 0.5);
+}
+
+.angled-btn-group li:hover a:before {
+  background: #aa0000;
+}
+
+.angled-btn-group li:hover a:after {
+  background: #ff3333;
+}
+
+/* Play Game Button - Alternative style */
 .play-game-btn {
   position: absolute;
   top: 75%;
@@ -407,40 +535,185 @@ body {
   text-shadow: 0 0 10px #FFD700;
 }
 
-@keyframes vintagePulse {
-  0% { 
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5), inset 0 0 5px rgba(255, 215, 0, 0.3);
-    text-shadow: 0 0 5px #FFD700;
-  }
-  50% { 
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.7), inset 0 0 8px rgba(255, 215, 0, 0.4);
-    text-shadow: 0 0 15px #FFD700;
-  }
-  100% { 
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5), inset 0 0 5px rgba(255, 215, 0, 0.3);
-    text-shadow: 0 0 5px #FFD700;
-  }
+
+/* =============================================================================
+   10. HOMEPAGE - CARD CONTAINER & LABELS
+   Used by: index.html
+   ============================================================================= */
+
+#card-container,
+#card-container-new {
+  position: fixed;
+  width: 150px;
+  height: 225px;
+  perspective: 1200px;
+  z-index: 1000;
+  pointer-events: none; 
 }
 
-#gameCanvas {
-  width: 100vw;
-  height: 100vh;
-  display: none;
-  filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.1));
-}
-
-.countdown-screen {
-  position: absolute;
-  top: 50%;
+#card-container {
+  position: fixed;
+  top: 60%;
   left: 50%;
+  width: 150px;
+  height: 225px;
+  perspective: 1200px;
   transform: translate(-50%, -50%);
-  font-family: 'Cinzel', serif;
-  font-size: 72px;
-  color: #FFD700;
-  text-shadow: 0 0 15px #FF0000, 0 0 25px #FF4500;
-  z-index: 150;
-  pointer-events: none;
+  z-index: 2;
+  pointer-events: none; 
 }
+
+.card {
+  position: absolute;
+  width: 70%;
+  height: 70%;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  transition: transform 0.6s ease, opacity 0.4s;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+  opacity: 0.5;
+  background: #111;
+  color: white;
+  font-family: sans-serif;
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+/* Card Stat Labels */
+#mana-label {
+  position: absolute;
+  top: 0px;
+  left: -150px;
+  padding: 6px 10px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #00f0ff;
+  text-shadow: 0 0 6px #00f0ff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  font-family: cursive;
+}
+
+#mana-label::after {
+  content: '→';
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #00f0ff;
+  animation: pulse 1s infinite alternate;
+}
+
+#attack-label {
+  position: absolute;
+  top: 150px;
+  right: 200px;
+  padding: 6px 10px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #FF0000;
+  text-shadow: 0 0 4px #ff4444;
+  pointer-events: none;
+  font-family: cursive;
+}
+
+#attack-label::after {
+  content: '→';
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #ff4444;
+  animation: pulse 1s infinite alternate;
+}
+
+#health-label {
+  position: absolute;
+  top: 150px;
+  left: 170px;
+  padding: 6px 10px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #44ff44;
+  text-shadow: 0 0 4px #44ff44;
+  pointer-events: none;
+  font-family: cursive;
+}
+
+#health-label::before {
+  content: '←';
+  font-size: 1.2rem;
+  color: #44ff44;
+  animation: pulse 1s infinite alternate;
+}
+
+
+/* =============================================================================
+   11. HOMEPAGE - NOTIFICATION WIDGET
+   Used by: index.html
+   ============================================================================= */
+
+#notification-widget {
+  position: fixed;
+  bottom: 100px;
+  right: 40px;
+  width: 150px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid gold;
+  border-radius: 16px;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  color: gold;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.5rem;
+  text-align: center;
+  padding: 10px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  z-index: 1000;
+  animation: pulse 1s infinite alternate;
+}
+
+#notification-title {
+  font-size: 0.6rem;
+  font-weight: bold;
+  margin-bottom: 5px;
+  text-shadow: 0 0 6px gold;
+  animation: pulse 1s infinite alternate;
+}
+
+#notification-countdown {
+  font-size: 0.45rem;
+  margin-bottom: 6px;
+  color: #FFD700;
+  text-shadow: 0 0 4px gold;
+  animation: pulse 1s infinite alternate;
+}
+
+#notification-message {
+  font-size: 0.4rem;
+  color: #FFD700;
+  animation: pulse 1s infinite alternate;
+}
+
+#notification-images {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+#notification-images img {
+  width: 40px;
+  height: 60px;
+  margin: 0 3px;
+  border-radius: 4px;
+  box-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+}
+
+
+/* =============================================================================
+   12. AUTHENTICATION PANEL
+   Used by: signing.html, buy.html
+   ============================================================================= */
 
 .auth-panel {
   position: absolute;
@@ -506,6 +779,12 @@ body {
   background: linear-gradient(90deg, #FF4500, #FF0000);
 }
 
+
+/* =============================================================================
+   13. POST-LOGIN SCREEN
+   Used by: signing.html
+   ============================================================================= */
+
 .post-login {
   position: fixed;
   top: 50%;
@@ -529,7 +808,6 @@ body {
   box-sizing: border-box;
   backdrop-filter: blur(3px);
 }
-
 
 .post-login::before {
   content: '';
@@ -556,6 +834,7 @@ body {
   background: linear-gradient(to right, transparent, rgba(255, 0, 0, 0.2), transparent);
 }
 
+/* Player Stats Box */
 .player-stats {
   width: 100%;
   padding: 20px;
@@ -609,6 +888,7 @@ body {
   font-weight: 700;
 }
 
+/* Post Login Buttons */
 .post-login-buttons {
   display: flex;
   flex-direction: column;
@@ -684,6 +964,11 @@ body {
 }
 
 
+/* =============================================================================
+   14. GAME UI - OVERLAY & INFO PANELS
+   Used by: signing.html (game mode)
+   ============================================================================= */
+
 .ui-overlay {
   position: absolute;
   top: 0;
@@ -722,6 +1007,12 @@ body {
   right: 15px; 
 }
 
+
+/* =============================================================================
+   15. GAME UI - HEALTH & MANA BARS
+   Used by: signing.html (game mode)
+   ============================================================================= */
+
 .health-bar, .mana-bar {
   width: 180px;
   height: 14px;
@@ -750,21 +1041,11 @@ body {
   box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
 }
 
-button {
-  font-family: 'Cinzel', serif;
-  font-size: 12px;
-  color: #FFD700;
-  background: linear-gradient(145deg, #2B2B2B, #3C3C3C);
-  border: 1px solid #FF0000;
-  border-radius: 8px;
-  padding: 8px 18px;
-  cursor: pointer;
-  pointer-events: auto;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 10px rgba(255, 0, 0, 0.15);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
+
+/* =============================================================================
+   16. GAME UI - BUTTONS
+   Used by: signing.html (game mode)
+   ============================================================================= */
 
 .end-turn-btn {
   position: absolute;
@@ -793,6 +1074,18 @@ button {
   gap: 12px;
 }
 
+.end-turn-btn:hover,
+.pause-btn:hover {
+  transform: translateX(-50%) scale(1.08);
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.5), 0 0 30px rgba(255, 69, 0, 0.3);
+}
+
+
+/* =============================================================================
+   17. GAME UI - GAME LOG
+   Used by: signing.html (game mode)
+   ============================================================================= */
+
 .game-log {
   position: absolute;
   top: 15px;
@@ -811,6 +1104,12 @@ button {
   text-shadow: 0 0 5px rgba(255, 0, 0, 0.2);
   box-shadow: inset 0 0 8px rgba(255, 0, 0, 0.05);
 }
+
+
+/* =============================================================================
+   18. GAME UI - TOOLTIPS
+   Used by: signing.html (game mode)
+   ============================================================================= */
 
 .card-tooltip, .lore-tooltip {
   position: absolute;
@@ -849,6 +1148,12 @@ button {
   border-image: url('/assets/button2.png') 300 round;
 }
 
+
+/* =============================================================================
+   19. GAME UI - TIMER
+   Used by: signing.html (game mode)
+   ============================================================================= */
+
 .timer {
   position: absolute;
   top: 50%;
@@ -863,17 +1168,11 @@ button {
   display: none; /* Initially hidden */
 }
 
-button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 15px rgba(255, 0, 0, 0.4), 0 0 25px rgba(255, 69, 0, 0.2);
-  background: linear-gradient(145deg, #3C3C3C, #4A4A4A);
-}
 
-.end-turn-btn:hover,
-.pause-btn:hover {
-  transform: translateX(-50%) scale(1.08);
-  box-shadow: 0 0 20px rgba(255, 0, 0, 0.5), 0 0 30px rgba(255, 69, 0, 0.3);
-}
+/* =============================================================================
+   20. GAME UI - STATS & GAME OVER
+   Used by: signing.html (game mode)
+   ============================================================================= */
 
 .game-stats {
   position: absolute;
@@ -939,7 +1238,260 @@ button:hover {
   background: linear-gradient(90deg, #FF4500, #FF0000);
 }
 
-/* Subtle Animations */
+
+/* =============================================================================
+   21. GAME CANVAS & COUNTDOWN
+   Used by: signing.html (game mode)
+   ============================================================================= */
+
+#gameCanvas {
+  width: 100vw;
+  height: 100vh;
+  display: none;
+  filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.1));
+}
+
+.countdown-screen {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Cinzel', serif;
+  font-size: 72px;
+  color: #FFD700;
+  text-shadow: 0 0 15px #FF0000, 0 0 25px #FF4500;
+  z-index: 150;
+  pointer-events: none;
+}
+
+
+/* =============================================================================
+   22. CONTENT PAGES - MAIN & TYPOGRAPHY
+   Used by: about.html, whitepaper.html, roadmap.html, cards.html
+   ============================================================================= */
+
+main {
+  padding: 20px;
+  color: #FFD700;
+  text-shadow: 0 0 5px #FF0000;
+  position: relative;
+  z-index: 1;
+}
+
+h1, h2 {
+  font-family: 'Cinzel', serif;
+  color: #FF0000;
+  text-shadow: 0 0 10px #FF0000;
+}
+
+p {
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Marquee - Scrolling text */
+.marquee {
+  position: absolute;
+  top: 7vh;
+  width: 100%;
+  background: rgba(255, 0, 0, 0.1);
+  color: #FFD700;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 24px;
+  white-space: nowrap;
+  overflow: hidden;
+  border-bottom: 1px solid #FF0000;
+}
+
+.marquee div {
+  display: inline-block;
+}
+
+.marquee span {
+  display: inline-block;
+  padding-right: 50px;
+}
+
+/* Controls Text */
+.controls-text {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  color: #FFD700;
+  font-size: 14px;
+  font-family: 'Roboto', sans-serif;
+  text-shadow: 0 0 5px #FF0000;
+}
+
+/* Tokenomics Popup */
+.tokenomics-popup {
+  display: none;
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid #FF0000;
+  border-radius: 8px;
+  padding: 15px;
+  width: 300px;
+  z-index: 1002;
+  box-shadow: 0 0 15px #FF0000;
+}
+
+.tokenomics-title {
+  color: #FF0000;
+  font-size: 20px;
+  font-family: 'Orbitron', sans-serif;
+  text-shadow: 0 0 10px #FF0000;
+  margin-bottom: 10px;
+}
+
+.tokenomics-subtitle {
+  color: #FFD700;
+  font-size: 16px;
+  font-family: 'Orbitron', sans-serif;
+  text-shadow: 0 0 5px #FF0000;
+  margin: 10px 0 5px 0;
+}
+
+.tokenomics-text {
+  color: #FFD700;
+  font-size: 14px;
+  font-family: 'Roboto', sans-serif;
+  text-shadow: 0 0 5px #FF0000;
+  margin: 5px 0;
+}
+
+.tokenomics-link {
+  color: #FF0000;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.tokenomics-link:hover {
+  color: #FFD700;
+  text-shadow: 0 0 10px #FFD700;
+}
+
+/* Top Right GIF decoration */
+.top-right-gif {
+  position: absolute;
+  bottom: -50px;
+  right: -10px;
+  width: 500px;
+  z-index: -1;
+}
+
+/* Binance Widget */
+.binance-widget-marquee {
+  margin-top: 10px;
+}
+
+
+/* =============================================================================
+   23. MUTE TOGGLE
+   Used by: index.html, signing.html
+   ============================================================================= */
+
+.mute-toggle {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 1000;
+}
+
+
+/* =============================================================================
+   24. LOADING SPINNER
+   Used by: buy.html
+   ============================================================================= */
+
+#loadingSpinner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  display: none;
+  z-index: 9999;
+}
+
+#loadingSpinner .spinner-circle {
+  width: 100%;
+  height: 100%;
+  border: 4px solid rgba(255, 215, 0, 1);
+  border-top: 4px solid black;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+
+/* =============================================================================
+   25. GLOBAL ANIMATIONS
+   Used by: ALL PAGES
+   ============================================================================= */
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 5px #FF0000, 0 0 10px #FF4500; }
+  50% { box-shadow: 0 0 10px #FF0000, 0 0 20px #FF4500, 0 0 30px #FFD700; }
+  100% { box-shadow: 0 0 5px #FF0000, 0 0 10px #FF4500; }
+}
+
+@keyframes glowFlicker {
+  0% {
+    opacity: 0.2;
+    transform: rotate(30deg) scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: rotate(30deg) scale(1.05);
+  }
+  100% {
+    opacity: 0.2;
+    transform: rotate(30deg) scale(1);
+  }
+}
+
+@keyframes glow-animation {
+  0% { text-shadow: 0 0 5px #FF0000; }
+  50% { text-shadow: 0 0 10px #FF0000, 0 0 15px #FF4500; }
+  100% { text-shadow: 0 0 5px #FF0000; }
+}
+
+@keyframes cursor-blink {
+  0% { border-color: #FF0000; }
+  50% { border-color: transparent; }
+}
+
+@keyframes marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+@keyframes vintagePulse {
+  0% { 
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5), inset 0 0 5px rgba(255, 215, 0, 0.3);
+    text-shadow: 0 0 5px #FFD700;
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.7), inset 0 0 8px rgba(255, 215, 0, 0.4);
+    text-shadow: 0 0 15px #FFD700;
+  }
+  100% { 
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5), inset 0 0 5px rgba(255, 215, 0, 0.3);
+    text-shadow: 0 0 5px #FFD700;
+  }
+}
+
 @keyframes fadePulse {
   0% { opacity: 0.8; }
   50% { opacity: 1; }
@@ -958,182 +1510,6 @@ button:hover {
   100% { text-shadow: 0 0 12px #FF0000, 0 0 20px #FF4500; }
 }
 
-button,
-.end-turn-btn,
-.pause-btn,
-.post-login-btn {
-  animation: glowShift 3s infinite ease-in-out;
-}
-
-#card-container,
-#card-container-new {
-  position: fixed;
-  width: 150px;
-  height: 225px;
-  perspective: 1200px;
-  z-index: 1000;
-  pointer-events: none; 
-}
-
-#card-container {
-  position: fixed;
-  top: 60%;
-  left: 50%;
-  width: 150px;
-  height: 225px;
-  perspective: 1200px;
-  transform: translate(-50%, -50%);
-  z-index: 2;
-  pointer-events: none; 
-}
-
-
- #notification-widget {
-    position: fixed;
-    bottom: 100px;
-    right: 40px;
-    width: 150px;
-    background: rgba(0, 0, 0, 0.85);
-    border: 1px solid gold;
-    border-radius: 16px;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-    color: gold;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.5rem;
-    text-align: center;
-    padding: 10px;
-    cursor: pointer;
-    transition: transform 0.2s ease;
-    z-index: 1000;
-    animation: pulse 1s infinite alternate;
-  }
-
-  #notification-title {
-    font-size: 0.6rem;
-    font-weight: bold;
-    margin-bottom: 5px;
-    text-shadow: 0 0 6px gold;
-    animation: pulse 1s infinite alternate;
-  }
-
-  #notification-countdown {
-    font-size: 0.45rem;
-    margin-bottom: 6px;
-    color: #FFD700;
-    text-shadow: 0 0 4px gold;
-    animation: pulse 1s infinite alternate;
-  }
-
-  #notification-message {
-    font-size: 0.4rem;
-    color: #FFD700;
-    animation: pulse 1s infinite alternate;
-  }
-
-  #notification-images {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-  }
-
-  #notification-images img {
-    width: 40px;
-    height: 60px;
-    margin: 0 3px;
-    border-radius: 4px;
-    box-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
-  }
-
-    @keyframes pulse {
-    0% { opacity: 0.8; }
-    50% { opacity: 1; transform: scale(1.05); }
-    100% { opacity: 0.8; }
-  }
-
-.card {
-  position: absolute;
-  width: 70%;
-  height: 70%;
-  backface-visibility: hidden;
-  transform-style: preserve-3d;
-  transition: transform 0.6s ease, opacity 0.4s;
-  border-radius: 16px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
-  opacity: 0.5;
-  background: #111;
-  color: white;
-  font-family: sans-serif;
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 215, 0, 0.2);
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-}
-
-
-#mana-label {
-  position: absolute;
-  top: 0px;
-  left: -150px;
-  padding: 6px 10px;
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #00f0ff;
-  text-shadow: 0 0 6px #00f0ff;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  pointer-events: none;
-  font-family: cursive;
-}
-
-#mana-label::after {
-  content: '→';
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #00f0ff;
-  animation: pulse 1s infinite alternate;
-}
-
-#attack-label {
-  position: absolute;
-  top: 150px;
-  right: 200px;
-  padding: 6px 10px;
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #FF0000;
-  text-shadow: 0 0 4px #ff4444;
-  pointer-events: none;
-  font-family: cursive;
-}
-#attack-label::after {
-  content: '→';
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #ff4444;
-  animation: pulse 1s infinite alternate;
-}
-
-
-#health-label {
-  position: absolute;
-  top: 150px;
-  left: 170px;
-  padding: 6px 10px;
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #44ff44;
-  text-shadow: 0 0 4px #44ff44;
-  pointer-events: none;
-  font-family: cursive;
-}
-#health-label::before {
-  content: '←';
-  font-size: 1.2rem;
-  color: #44ff44;
-  animation: pulse 1s infinite alternate;
-}
-
-
 @keyframes pulse {
   0% {
     transform: scale(1);
@@ -1145,70 +1521,9 @@ button,
   }
 }
 
-main {
-    padding: 20px;
-    color: #FFD700;
-    text-shadow: 0 0 5px #FF0000;
-    position: relative;
-    z-index: 1;
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
-h1, h2 {
-    font-family: 'Cinzel', serif;
-    color: #FF0000;
-    text-shadow: 0 0 10px #FF0000;
-}
-p {
-    font-family: 'Roboto', sans-serif;
-}
-.home-link {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    color: #FFD700;
-    font-family: 'Orbitron', sans-serif;
-    text-decoration: none;
-    text-shadow: 0 0 5px #FF0000;
-}
-.home-link:hover {
-    color: #FF0000;
-    text-shadow: 0 0 10px #FFD700;
-}
-
-
-/* here */
-
-.masq-navbar {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 24px;
-}
-
-.nav-link {
-    cursor: pointer;
-    font-size: 18px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    position: relative;
-    font-weight: bold;
-    grid-row-start: 1;
-    grid-column-start: 1;
-    font-size: 1.2rem;
-    --stack-height: calc(100% / var(--stacks) - 1px);
-    --inverse-index: calc(calc(var(--stacks) - 1) - var(--index));
-    --clip-top: calc(var(--stack-height) * var(--index));
-    --clip-bottom: calc(var(--stack-height) * var(--inverse-index));
-    clip-path: inset(var(--clip-top) 0 var(--clip-bottom) 0);
-    animation: stack 340ms cubic-bezier(.46,.29,0,1.24) 1 backwards calc(var(--index) * 20ms), glitch 2s ease infinite 2s alternate-reverse;
-    color: #FFD700;
-    background-image: url('/assets/button_f.png');
-    background-size: cover;
-    background-position: center;
-  
-}
-
-.nav-link span:nth-child(odd) { --glitch-translate: 10px; }
-.nav-link span:nth-child(even) { --glitch-translate: -10px; }
 
 @keyframes stack {
   0% {
@@ -1241,162 +1556,23 @@ p {
   4%, 100% {  text-shadow: none; transform: none; }
 }
 
-.nav-link:hover {
-    color: white;
-    text-shadow: 0 0 6px red;
+/* Animation assignments */
+button,
+.end-turn-btn,
+.pause-btn,
+.post-login-btn {
+  animation: glowShift 3s infinite ease-in-out;
 }
 
-.angled-btn-group {
-  position: absolute;
-  top: 80%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  margin: 0;
-  padding: 0;
-  z-index: 1001;
-  font-family: 'Orbitron', sans-serif;
-}
 
-.angled-btn-group li {
-  list-style: none;
-  margin: 0 30px;
-}
-
-.angled-btn-group li a {
-  text-decoration: none;
-  display: block;
-  width: 120px;
-  height: 100px;
-  text-shadow: 0 0 5px #FF0000;
-  color: #FFD700; 
-  text-align: left;
-  padding-left: 30px;
-  transform: rotate(0deg) skew(5deg);
-  transition: 0.5s;
-  box-shadow: inset 0 0 10px #000, 0 0 10px #FFD700;
-  border: 2px solid red;
-  border-radius: 12px;
-  position: relative;
-  background: url('/assets/button2.gif') no-repeat center center / cover;
-}
-
-.angled-btn-group li a:before {
-  content: '';
-  position: absolute;
-  top: 10px;
-  left: -20px;
-  height: 100%;
-  width: 20px;
-  background: none;
-/*   animation: pulseGlow 1.5s infinite ease-in-out; */
-  border: 2px solid red;
-  border-radius: 12px;
-  transform: skewY(-45deg);
-  background: url('/assets/button2.gif') no-repeat center center / cover;
-/*   opacity: 0.7; */
-}
-
-.angled-btn-group li a:after {
-  content: '';
-  position: absolute;
-  bottom: -20px;
-  left: -10px;
-  height: 20px;
-  width: 100%;
-  background: none;
-/*   animation: pulseGlow 1.5s infinite ease-in-out; */
-  border: 2px solid red;
-  border-radius: 12px;
-  transform: skewX(-45deg);
-  background: url('/assets/button2.gif') no-repeat center center / cover;
-/*   opacity: 0.7; */
-}
-
-.angled-btn-group li a i {
-  font-size: 28px;
-  color: white;
-  line-height: 80px;
-  transition: 0.5s;
-  padding-right: 14px;
-  display: inline-block;
-}
-
-.angled-btn-group li a span {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  padding: 0 10px;
-  margin: 0;
-  color: white;
-  letter-spacing: 4px;
-  transition: 0.5s;
-  text-shadow: 2px 2px red;
-  font-size: 15px;
-}
-
-.angled-btn-group li a:hover {
-  transform: rotate(0deg) skew(5deg) translate(20px, -15px);
-  box-shadow: -50px 50px 50px rgba(0, 0, 0, 0.5);
-  background: url('/assets/button2.gif') no-repeat center center / cover;
-/*   opacity: 0.7; */
-}
-
-.angled-btn-group li a:hover i,
-.angled-btn-group li a:hover span {
-  box-shadow: -50px 50px 50px rgba(0, 0, 0, 0.5);
-}
-
-.angled-btn-group li:hover a:before {
-  background: #aa0000;
-}
-.angled-btn-group li:hover a:after {
-  background: #ff3333;
-}
-
-.mute-toggle {
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
-  background: rgba(0,0,0,0.6);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  font-size: 24px;
-  cursor: pointer;
-  z-index: 1000;
-}
-
-#loadingSpinner {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: 40px;
-  height: 40px;
-  display: none;
-  z-index: 9999;
-}
-
-#loadingSpinner .spinner-circle {
-  width: 100%;
-  height: 100%;
-  border: 4px solid rgba(255, 215, 0, 1);
-  border-top: 4px solid black;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* ----responsiveForHandhelds---- */
+/* =============================================================================
+   26. RESPONSIVE - MOBILE (max-width: 768px)
+   Used by: ALL PAGES
+   ============================================================================= */
 
 @media (max-width: 768px) {
-  /* Body */
+  
+  /* --- GLOBAL MOBILE ADJUSTMENTS --- */
   body {
     font-size: 7px;
     cursor: auto;
@@ -1404,24 +1580,22 @@ p {
     flex-direction: column;
   }
 
-  /* Homepage */
   .homepage {
     height: 100vh;
   }
 
-  /* Loading Screen */
+  /* --- LOADING SCREEN MOBILE --- */
   .loading-screen {
     width: 100%;
     height: 100%;
   }
 
-  /* Loading Text */
   .loading-text {
     font-size: 9px; 
     margin-top: 7.5px; 
   }
 
-  /* Video Background */
+  /* --- VIDEO BACKGROUND MOBILE --- */
   .video-bg {
     width: 100%;
     height: 100%;
@@ -1429,43 +1603,34 @@ p {
     opacity: 0.1; 
   }
 
-  /* Header */
+  /* --- HEADER MOBILE --- */
   .header {
     height: 2.5vh;
     padding: 0 5px;
     background-size: contain;
   }
 
-  /* Logo */
   .logo {
     width: 20px;
     margin-left: 2.5px; 
   }
 
-  /* Title Container */
-  .title-container {
-    flex-grow: 1;
-  }
-
-  /* Title */
   .title {
     font-size: 12px;
     border-image: url('/assets/button2.png') 75 round;
   }
 
-  /* Subtitle */
   .subtitle {
     font-size: 5px;
     margin-left: 2.5px;
   }
 
-  /* Connect Container */
+  /* --- BUTTONS MOBILE --- */
   .connect-container {
     bottom: 5px;
     right: 5px;
   }
 
-  /* Connect Button */
   .connect-btn {
     padding: 4px 8px;
     font-size: 7px; 
@@ -1473,20 +1638,632 @@ p {
     border-width: 1px; 
   }
 
-  /* Connect Button Pseudo Elements */
   .connect-btn::before,
   .connect-btn::after {
     width: 75%; 
     height: 75%;
   }
 
-  /* Connect Button Hover */
   .connect-btn:hover {
     transform: scale(1.025); 
     box-shadow: 0 0 5px #FFD700, 0 0 7.5px #FF0000;
   }
 
-  /* Pulse Glow Animation */
+  button {
+    font-size: 5px; 
+    padding: 3px 6px; 
+    border-width: 0.5px; 
+    border-radius: 4px; 
+    box-shadow: 0 0 5px rgba(255, 0, 0, 0.075); 
+  }
+
+  button:hover,
+  .end-turn-btn:hover,
+  .pause-btn:hover {
+    transform: scale(1.015); 
+    box-shadow: 0 0 5px rgba(255, 0, 0, 0.2);
+  }
+
+  /* --- MARQUEE MOBILE --- */
+  .marquee {
+    font-size: 9px; 
+    top: 2.5vh;
+    border-bottom-width: 0.5px;
+  }
+
+  .marquee div,
+  .marquee span {
+    padding-right: 15px; 
+  }
+
+  /* --- TYPEWRITER MOBILE --- */
+  .typewriter-container {
+    margin-top: 4vh;
+    padding: 7.5px; 
+  }
+
+  .typewriter-text {
+    font-size: 7px; 
+    margin: 5px 0; 
+    text-shadow: 0 0 2.5px #FF0000;
+  }
+
+  .cursor {
+    border-right: 0.5px solid #FF0000;
+  }
+
+  /* --- ANGLED BUTTONS MOBILE --- */
+  .angled-btn-group {
+    top: 37.5%; 
+    flex-direction: row;
+    gap: 5px; 
+    margin-top: 40vh;
+  }
+
+  .angled-btn-group li {
+    margin: 5px 0;
+    margin: 0 2vw;
+  }
+
+  .angled-btn-group li a {
+    width: 40px; 
+    height: 30px; 
+    padding-left: 10px; 
+    transform: rotate(0deg) skew(1.5deg); 
+    box-shadow: inset 0 0 5px #000, 0 0 5px #FFD700; 
+    border-width: 1px; 
+    border-radius: 6px; 
+  }
+
+  .angled-btn-group li a:before {
+    top: 2.5px;
+    left: -7.5px; 
+    width: 7.5px; 
+    border-width: 1px;
+    border-radius: 6px; 
+  }
+
+  .angled-btn-group li a:after {
+    bottom: -7.5px;
+    left: -2.5px; 
+    height: 7.5px; 
+    border-width: 1px; 
+    border-radius: 6px; 
+  }
+
+  .angled-btn-group li a i {
+    font-size: 12px; 
+    line-height: 30px; 
+    padding-right: 7px; 
+  }
+
+  .angled-btn-group li a span {
+    font-size: 4px; 
+    letter-spacing: 2px; 
+    text-shadow: 1px 1px red; 
+  }
+
+  .angled-btn-group li a:hover {
+    transform: rotate(0deg) skew(1.5deg) translate(5px, -5px); 
+    box-shadow: -15px 15px 15px rgba(0, 0, 0, 0.15); 
+  }
+
+  /* --- CLICKABLE WORD MOBILE --- */
+  .clickable-word {
+    font-size: 10px; 
+    bottom: 2.5px; 
+  }
+
+  .clickable-word span {
+    margin: 0 5px; 
+  }
+
+  .clickable-word span:hover {
+    text-shadow: 0 0 4px #FFD700;
+  }
+
+  /* --- TOKENOMICS MOBILE --- */
+  .tokenomics-popup {
+    width: 40%; 
+    max-width: 125px; 
+    bottom: 15px; 
+    padding: 5px; 
+    border-width: 1px; 
+    border-radius: 4px; 
+    box-shadow: 0 0 7.5px #FF0000; 
+  }
+
+  .tokenomics-title {
+    font-size: 8px;
+    text-shadow: 0 0 5px #FF0000; 
+    margin-bottom: 5px; 
+  }
+
+  .tokenomics-subtitle {
+    font-size: 7px; 
+    text-shadow: 0 0 2.5px #FF0000; 
+    margin: 5px 0 2.5px;
+  }
+
+  .tokenomics-text {
+    font-size: 6px;
+    text-shadow: 0 0 2.5px #FF0000; 
+    margin: 2.5px 0;
+  }
+
+  /* --- CONTROLS & MISC MOBILE --- */
+  .controls-text {
+    font-size: 6px;
+    bottom: 2.5px; 
+    left: 2.5px; 
+    text-shadow: 0 0 2.5px #FF0000; 
+  }
+
+  .top-right-gif {
+    width: 100px; 
+    bottom: -10px; 
+    right: -2.5px; 
+  }
+
+  .binance-widget-marquee {
+    margin-top: 2.5px; 
+  }
+
+  /* --- PLAY GAME BUTTON MOBILE --- */
+  .play-game-btn {
+    padding: 7.5px 15px; 
+    top: 35%;
+    font-size: 7px; 
+    border-width: 1px; 
+    border-radius: 5px; 
+    box-shadow: 0 0 7.5px rgba(255, 215, 0, 0.25); 
+  }
+
+  .play-game-btn:hover {
+    transform: translate(-50%, -50%) scale(1.015);
+    box-shadow: 0 0 7.5px rgba(255, 215, 0, 0.3);
+  }
+
+  /* --- GAME CANVAS MOBILE --- */
+  #gameCanvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  .countdown-screen {
+    font-size: 24px; 
+    text-shadow: 0 0 7.5px #FF0000, 0 0 12.5px #FF4500;
+  }
+
+  /* --- AUTH PANEL MOBILE --- */
+  .auth-panel {
+    padding: 10px;
+    min-width: 125px;
+    max-width: 45%; 
+    border-image: url('/assets/button2.png') 75 round;
+    border-width: 25px;
+    border-radius: 6px; 
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.075); 
+  }
+
+  .auth-panel input {
+    font-size: 7px;
+    padding: 4px; 
+    margin: 5px 0; 
+    border-width: 0.5px; 
+    border-radius: 3px; 
+    box-shadow: inset 0 0 2.5px rgba(255, 0, 0, 0.05);
+  }
+
+  .auth-panel input:focus {
+    border-color: #FF0000;
+    box-shadow: 0 0 4px rgba(255, 0, 0, 0.1); 
+    outline: none;
+  }
+
+  .auth-buttons {
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 7px;
+  }
+
+  .auth-buttons button {
+    margin: 2.5px 0;
+    padding: 4px; 
+    font-size: 7px; 
+    border-width: 5px; 
+    border-image: url('/assets/button2.gif') 150 round; 
+  }
+
+  .auth-buttons button:hover {
+    transform: scale(1.015); 
+    box-shadow: 0 0 7.5px rgba(255, 0, 0, 0.35); 
+  }
+
+  /* --- POST LOGIN MOBILE --- */
+  .post-login {
+    width: 100%; 
+    max-width: 80vh; 
+    padding: 10px; 
+    border-image: url('/assets/button2.png') 75 round; 
+    border-width: 25px; 
+    border-radius: 10px; 
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.15); 
+    gap: 15px;
+  }
+
+  .post-login::before {
+    top: -5px; 
+    left: -5px; 
+    right: -5px; 
+    bottom: -5px; 
+    border-radius: 15px; 
+  }
+
+  .post-login-title {
+    font-size: 11px;
+    text-shadow: 0 0 5px #FF0000, 0 0 10px #FF4500; 
+    padding-bottom: 5px;
+    border-bottom-width: 1px;
+  }
+
+  .player-stats {
+    padding: 7.5px; 
+    border-radius: 7.5px; 
+    box-shadow: inset 0 0 5px rgba(255, 0, 0, 0.1);
+  }
+
+  .player-stats::before {
+    top: -2.5px; 
+    left: -2.5px; 
+    right: -2.5px; 
+    bottom: -2.5px; 
+    border-width: 1px; 
+    border-radius: 10px; 
+  }
+
+  .stats-header {
+    font-size: 8px; 
+    text-shadow: 0 0 4px #FFD700;
+    margin-bottom: 7.5px; 
+  }
+
+  .stats-item {
+    padding: 4px 0; 
+    border-bottom-width: 0.5px; 
+  }
+
+  .stats-label {
+    font-size: 7px; 
+    text-shadow: 0 0 2.5px #FF0000; 
+  }
+
+  .stats-value {
+    font-size: 9px; 
+  }
+
+  .post-login-buttons {
+    gap: 7.5px; 
+  }
+
+  .post-login-btn {
+    padding: 5px 10px; 
+    font-size: 8px; 
+    border-width: 1px; 
+    border-radius: 7.5px; 
+    box-shadow: 0 0 7.5px rgba(255, 0, 0, 0.25);
+  }
+
+  .post-login-btn::before {
+    width: 75%; 
+    height: 75%; 
+  }
+
+  .post-login-btn:hover {
+    transform: scale(1.015); 
+    box-shadow: 0 0 7.5px rgba(255, 0, 0, 0.35); 
+  }
+
+  .play-btn {
+    padding: 5px 10px; 
+    font-size: 7px; 
+    border-width: 1px; 
+    text-shadow: 0 0 2.5px #FF0000; 
+  }
+
+  .buy-btn {
+    padding: 5px 10px; 
+    font-size: 7px; 
+    border-width: 1px; 
+    text-shadow: 0 0 2.5px #FF0000; 
+  }
+
+  /* --- GAME UI MOBILE --- */
+  .ui-overlay {
+    width: 100%;
+    height: 100%;
+  }
+
+  .player-info {
+    width: 90px; 
+    min-height: 50px; 
+    bottom: 5px; 
+    left: 5px; 
+    padding: 6px; 
+    border-width: 5px; 
+    border-radius: 5px; 
+    box-shadow: 0 0 7.5px rgba(255, 0, 0, 0.05); 
+    gap: 5px; 
+  }
+
+  .opponent-info {
+    width: 90px; 
+    min-height: 50px; 
+    top: 5px; 
+    right: 5px; 
+    padding: 6px; 
+    border-width: 5px; 
+    border-radius: 5px; 
+    box-shadow: 0 0 7.5px rgba(255, 0, 0, 0.05); 
+    gap: 5px; 
+  }
+
+  .health-bar,
+  .mana-bar {
+    width: 70px;
+    height: 6px; 
+    border-radius: 3px;
+    margin-top: 3px; 
+    border-width: 0.5px; 
+    box-shadow: inset 0 0 2px rgba(255, 0, 0, 0.075); 
+  }
+
+  .health-fill,
+  .mana-fill {
+    border-radius: 2px 0 0 2px; 
+    box-shadow: 0 0 4px rgba(139, 69, 19, 0.2); 
+  }
+
+  .end-turn-btn {
+    bottom: 5px; 
+    font-size: 6px; 
+    padding: 3px 6px; 
+  }
+
+  .pause-btn {
+    top: 5px;
+    font-size: 6px; 
+    padding: 3px 6px; 
+  }
+
+  .right-buttons {
+    right: 5px; 
+    gap: 4px; 
+  }
+
+  .game-log {
+    width: 100px; 
+    max-height: 100px; 
+    font-size: 5px; 
+    padding: 4px; 
+    border-width: 5px; 
+    border-radius: 3px; 
+    box-shadow: inset 0 0 4px rgba(255, 0, 0, 0.025); 
+  }
+
+  .card-tooltip,
+  .lore-tooltip {
+    font-size: 6px; 
+    padding: 5px; 
+    max-width: 150px; 
+    border-width: 0.5px; 
+    border-radius: 4px; 
+    box-shadow: 0 0 7.5px rgba(255, 0, 0, 0.1); 
+  }
+
+  .how-to-play-tooltip {
+    font-size: 6px; 
+    padding: 5px; 
+    max-width: 150px; 
+    top: 20%; 
+    border-width: 5px; 
+    border-radius: 4px; 
+    box-shadow: 0 0 7.5px rgba(255, 0, 0, 0.1); 
+  }
+
+  .timer {
+    font-size: 24px; 
+    text-shadow: 0 0 6px #FF0000, 0 0 10px #FF4500; 
+  }
+
+  .game-stats {
+    width: 90px; 
+    padding: 6px; 
+    bottom: 5px; 
+    right: 5px; 
+    border-width: 5px; 
+    border-radius: 5px; 
+    box-shadow: 0 0 7.5px rgba(255, 0, 0, 0.05); 
+    gap: 5px;
+  }
+
+  .game-over-screen {
+    padding: 10px; 
+    width: 45%; 
+    max-width: 150px; 
+    border-width: 0.5px; 
+    border-radius: 6px; 
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.1);
+  }
+
+  .game-over-screen h2 {
+    font-size: 12px; 
+    margin-bottom: 9px; 
+    text-shadow: 0 0 4px rgba(255, 0, 0, 0.15); 
+  }
+
+  .game-over-screen p {
+    font-size: 7px; 
+    margin-bottom: 12.5px; 
+  }
+
+  .game-over-screen button {
+    font-size: 6px;
+    padding: 4px 8px;
+    margin: 0 4px; 
+  }
+
+  .game-over-screen button:hover {
+    transform: scale(1.015);
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.25); 
+  }
+
+  /* --- CARD CONTAINER MOBILE --- */
+  #card-container,
+  #card-container-new {
+    width: 60px; 
+    height: 90px; 
+    top: 27.5%; 
+    margin-top: 20vh;
+  }
+
+  .card {
+    width: 100%;
+    height: 100%;
+    border-radius: 6px; 
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+    border-width: 0.5px; 
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.15); 
+  }
+
+  #mana-label {
+    font-size: 0.6rem; 
+    left: -60px;
+    padding: 3px 5px; 
+    text-shadow: 0 0 3px #00f0ff; 
+    gap: 3px; 
+  }
+
+  #mana-label::after {
+    font-size: 0.6rem; 
+  }
+
+  #attack-label {
+    font-size: 0.6rem; 
+    right: 80px; 
+    padding: 3px 5px; 
+    text-shadow: 0 0 2px #ff4444; 
+  }
+
+  #attack-label::after {
+    font-size: 0.6rem; 
+  }
+
+  #health-label {
+    font-size: 0.6rem; 
+    left: 70px; 
+    padding: 3px 5px; 
+    text-shadow: 0 0 2px #44ff44; 
+  }
+
+  #health-label::before {
+    font-size: 0.6rem;
+  }
+
+  /* --- CONTENT PAGES MOBILE --- */
+  main {
+    padding: 7.5px;
+    text-shadow: 0 0 2.5px #FF0000; 
+  }
+
+  h1, h2 {
+    font-size: 10px;
+    text-shadow: 0 0 5px #FF0000; 
+  }
+
+  p {
+    font-size: 7px; 
+  }
+
+  .home-link {
+    font-size: 7px; 
+    top: 5px; 
+    left: 5px; 
+    text-shadow: 0 0 2.5px #FF0000; 
+  }
+
+  .home-link:hover {
+    text-shadow: 0 0 4px #FFD700; 
+  }
+
+  /* --- NAVBAR MOBILE --- */
+  .masq-navbar {
+    gap: 8px; 
+    flex-direction: row;
+    bottom: 0px;
+  }
+
+  .nav-link {
+    font-size: 8px;
+    padding: 4px; 
+  }
+
+  /* --- MUTE TOGGLE MOBILE --- */
+  .mute-toggle {
+    width: 20px; 
+    height: 20px; 
+    font-size: 10px;
+    bottom: 5px; 
+    left: 5px; 
+  }
+
+  /* --- LOADING SPINNER MOBILE --- */
+  #loadingSpinner {
+    width: 15px; 
+    height: 15px; 
+  }
+
+  #loadingSpinner .spinner-circle {
+    border-width: 1.5px;
+  }
+
+  /* --- NOTIFICATION WIDGET MOBILE --- */
+  #notification-widget {
+    width: 60px; 
+    bottom: 40px; 
+    right: 10px; 
+    font-size: 0.2rem; 
+    padding: 4px; 
+    border-width: 0.5px;
+    border-radius: 8px; 
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.25); 
+  }
+
+  #notification-title {
+    font-size: 0.25rem; 
+    margin-bottom: 2.5px; 
+    text-shadow: 0 0 3px gold; 
+  }
+
+  #notification-countdown {
+    font-size: 0.175rem; 
+    margin-bottom: 3px; 
+    text-shadow: 0 0 2px gold;
+  }
+
+  #notification-message {
+    font-size: 0.15rem; 
+  }
+
+  #notification-images img {
+    width: 15px; 
+    height: 22.5px; 
+    margin: 0 1.5px; 
+    border-radius: 2px; 
+    box-shadow: 0 0 2.5px rgba(255, 215, 0, 0.15);
+  }
+
+  /* --- MOBILE ANIMATIONS --- */
   @keyframes pulseGlow {
     0% {
       box-shadow: 0 0 1.5px #FFD700, 0 0 3px #FF0000;
@@ -1496,7 +2273,6 @@ p {
     }
   }
 
-  /* Glow Flicker Animation */
   @keyframes glowFlicker {
     0% {
       opacity: 0.05;
@@ -1512,232 +2288,12 @@ p {
     }
   }
 
-  /* Marquee */
-  .marquee {
-    font-size: 9px; 
-    top: 2.5vh;
-    border-bottom-width: 0.5px;
-  }
-
-  /* Marquee Div and Span */
-  .marquee div,
-  .marquee span {
-    padding-right: 15px; 
-  }
-
-  /* Marquee Scroll Animation */
-  @keyframes marquee-scroll {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-100%); }
-  }
-
-  /* Border Green */
-  .border-green {
-    border-width: 0.5px;
-  }
-
-  /* Typewriter Container */
-  .typewriter-container {
-    margin-top: 4vh;
-    padding: 7.5px; 
-  }
-
-  /* Typewriter Text */
-  .typewriter-text {
-    font-size: 7px; 
-    margin: 5px 0; 
-    text-shadow: 0 0 2.5px #FF0000;
-  }
-
-  /* Glow Animation */
   @keyframes glow-animation {
-    0% { text-shadow: 0 0 1.5px #FF0000; 
-    }
-    50% { text-shadow: 0 0 4px #FF0000, 0 0 5px #FF4500;
-    }
-    100% { text-shadow: 0 0 1.5px #FF0000; 
-    }
+    0% { text-shadow: 0 0 1.5px #FF0000; }
+    50% { text-shadow: 0 0 4px #FF0000, 0 0 5px #FF4500; }
+    100% { text-shadow: 0 0 1.5px #FF0000; }
   }
 
-  /* Cursor */
-  .cursor {
-    border-right: 0.5px solid #FF0000;
-  }
-
-  /* Cursor Blink Animation */
-  @keyframes cursor-blink {
-    0% { border-color: #FF0000; }
-    50% { border-color: transparent; }
-  }
-  
-  /* Angled Button Group */
-  .angled-btn-group {
-    top: 37.5%; 
-    flex-direction: row;
-    gap: 5px; 
-    margin-top: 40vh;
-  }
-
-  /* Angled Button Group List Item */
-  .angled-btn-group li {
-    margin: 5px 0;
-    margin: 0 2vw;
-  }
-
-  /* Angled Button Group Link */
-  .angled-btn-group li a {
-    width: 40px; 
-    height: 30px; 
-    padding-left: 10px; 
-    transform: rotate(0deg) skew(1.5deg); 
-    box-shadow: inset 0 0 5px #000, 0 0 5px #FFD700; 
-    border-width: 1px; 
-    border-radius: 6px; 
-  }
-
-  /* Angled Button Group Link Before */
-  .angled-btn-group li a:before {
-    top: 2.5px;
-    left: -7.5px; 
-    width: 7.5px; 
-    border-width: 1px;
-    border-radius: 6px; 
-  }
-
-  /* Angled Button Group Link After */
-  .angled-btn-group li a:after {
-    bottom: -7.5px;
-    left: -2.5px; 
-    height: 7.5px; 
-    border-width: 1px; 
-    border-radius: 6px; 
-  }
-
-  /* Angled Button Group Icon */
-  .angled-btn-group li a i {
-    font-size: 12px; 
-    line-height: 30px; 
-    padding-right: 7px; 
-  }
-
-  /* Angled Button Group Span */
-  .angled-btn-group li a span {
-    font-size: 4px; 
-    letter-spacing: 2px; 
-    text-shadow: 1px 1px red; 
-  }
-
-  /* Angled Button Group Link Hover */
-  .angled-btn-group li a:hover {
-    transform: rotate(0deg) skew(1.5deg) translate(5px, -5px); 
-    box-shadow: -15px 15px 15px rgba(0, 0, 0, 0.15); 
-  }
-
-  /* Angled Button Group Before Hover */
-  .angled-btn-group li:hover a:before {
-    background: #aa0000;
-  }
-
-  /* Angled Button Group After Hover */
-  .angled-btn-group li:hover a:after {
-    background: #ff3333;
-  }
-
-  /* Controls Text */
-  .controls-text {
-    font-size: 6px;
-    bottom: 2.5px; 
-    left: 2.5px; 
-    text-shadow: 0 0 2.5px #FF0000; 
-  }
-
-  /* Clickable Word */
-  .clickable-word {
-    font-size: 10px; 
-    bottom: 2.5px; 
-  }
-
-  /* Clickable Word Span */
-  .clickable-word span {
-    margin: 0 5px; 
-  }
-
-  /* Clickable Word Span Hover */
-  .clickable-word span:hover {
-    text-shadow: 0 0 4px #FFD700;
-  }
-
-  /* Tokenomics Popup */
-  .tokenomics-popup {
-    width: 40%; 
-    max-width: 125px; 
-    bottom: 15px; 
-    padding: 5px; 
-    border-width: 1px; 
-    border-radius: 4px; 
-    box-shadow: 0 0 7.5px #FF0000; 
-  }
-
-  /* Tokenomics Title */
-  .tokenomics-title {
-    font-size: 8px;
-    text-shadow: 0 0 5px #FF0000; 
-    margin-bottom: 5px; 
-  }
-
-  /* Tokenomics Subtitle */
-  .tokenomics-subtitle {
-    font-size: 7px; 
-    text-shadow: 0 0 2.5px #FF0000; 
-    margin: 5px 0 2.5px;
-  }
-
-  /* Tokenomics Text */
-  .tokenomics-text {
-    font-size: 6px;
-    text-shadow: 0 0 2.5px #FF0000; 
-    margin: 2.5px 0;
-  }
-
-  /* Tokenomics Link */
-  .tokenomics-link {
-    font-size: 6px;
-  }
-
-  /* Tokenomics Link Hover */
-  .tokenomics-link:hover {
-    text-shadow: 0 0 4px #FFD700; 
-  }
-
-  /* Top Right GIF */
-  .top-right-gif {
-    width: 100px; 
-    bottom: -10px; 
-    right: -2.5px; 
-  }
-
-  /* Binance Widget Marquee */
-  .binance-widget-marquee {
-    margin-top: 2.5px; 
-  }
-
-  /* Play Game Button */
-  .play-game-btn {
-    padding: 7.5px 15px; 
-    top: 35%;
-    font-size: 7px; 
-    border-width: 1px; 
-    border-radius: 5px; 
-    box-shadow: 0 0 7.5px rgba(255, 215, 0, 0.25); 
-  }
-
-  /* Play Game Button Hover */
-  .play-game-btn:hover {
-    transform: translate(-50%, -50%) scale(1.015);
-    box-shadow: 0 0 7.5px rgba(255, 215, 0, 0.3);
-  }
-
-  /* Vintage Pulse Animation */
   @keyframes vintagePulse {
     0% {
       box-shadow: 0 0 5px rgba(255, 215, 0, 0.2);
@@ -1753,548 +2309,26 @@ p {
     }
   }
 
-  /* Game Canvas */
-  #gameCanvas {
-    width: 100%;
-    height: 100%;
-  }
-
-  /* Countdown Screen */
-  .countdown-screen {
-    font-size: 24px; 
-    text-shadow: 0 0 7.5px #FF0000, 0 0 12.5px #FF4500;
-  }
-
-  /* Auth Panel */
-  .auth-panel {
-    padding: 10px;
-    min-width: 125px;
-    max-width: 45%; 
-    border-image: url('/assets/button2.png') 75 round;
-    border-width: 25px;
-    border-radius: 6px; 
-    box-shadow: 0 0 15px rgba(255, 0, 0, 0.075); 
-  }
-
-  /* Auth Panel Input */
-  .auth-panel input {
-    font-size: 7px;
-    padding: 4px; 
-    margin: 5px 0; 
-    border-width: 0.5px; 
-    border-radius: 3px; 
-    box-shadow: inset 0 0 2.5px rgba(255, 0, 0, 0.05);
-  }
-
-  /* Auth Panel Input Focus */
-  .auth-panel input:focus {
-    border-color: #FF0000;
-    box-shadow: 0 0 4px rgba(255, 0, 0, 0.1); 
-    outline: none;
-  }
-
-  /* Auth Buttons */
-  .auth-buttons {
-    flex-direction: column;
-    gap: 5px;
-    margin-top: 7px;
-  }
-
-  /* Auth Buttons Button */
-  .auth-buttons button {
-    margin: 2.5px 0;
-    padding: 4px; 
-    font-size: 7px; 
-    border-width: 5px; 
-    border-image: url('/assets/button2.gif') 150 round; 
-  }
-
-  /* Auth Buttons Button Hover */
-  .auth-buttons button:hover {
-    transform: scale(1.015); 
-    box-shadow: 0 0 7.5px rgba(255, 0, 0, 0.35); 
-  }
-
-  /* Post Login */
-  .post-login {
-    width: 100%; 
-    max-width: 80vh; 
-    padding: 10px; 
-    border-image: url('/assets/button2.png') 75 round; 
-    border-width: 25px; 
-    border-radius: 10px; 
-    box-shadow: 0 0 20px rgba(255, 0, 0, 0.15); 
-    gap: 15px;
-  }
-
-  /* Post Login Before */
-  .post-login::before {
-    top: -5px; 
-    left: -5px; 
-    right: -5px; 
-    bottom: -5px; 
-    border-radius: 15px; 
-  }
-
-  /* Post Login Title */
-  .post-login-title {
-    font-size: 11px;
-    text-shadow: 0 0 5px #FF0000, 0 0 10px #FF4500; 
-    padding-bottom: 5px;
-    border-bottom-width: 1px;
-  }
-
-  /* Player Stats */
-  .player-stats {
-    padding: 7.5px; 
-    border-radius: 7.5px; 
-    box-shadow: inset 0 0 5px rgba(255, 0, 0, 0.1);
-  }
-
-  /* Player Stats Before */
-  .player-stats::before {
-    top: -2.5px; 
-    left: -2.5px; 
-    right: -2.5px; 
-    bottom: -2.5px; 
-    border-width: 1px; 
-    border-radius: 10px; 
-  }
-
-  /* Stats Header */
-  .stats-header {
-    font-size: 8px; 
-    text-shadow: 0 0 4px #FFD700;
-    margin-bottom: 7.5px; 
-  }
-
-  /* Stats Item */
-  .stats-item {
-    padding: 4px 0; 
-    border-bottom-width: 0.5px; 
-  }
-
-  /* Stats Label */
-  .stats-label {
-    font-size: 7px; 
-    text-shadow: 0 0 2.5px #FF0000; 
-  }
-
-  /* Stats Value */
-  .stats-value {
-    font-size: 9px; 
-  }
-
-  /* Post Login Buttons */
-  .post-login-buttons {
-    gap: 7.5px; 
-  }
-
-  /* Post Login Button */
-  .post-login-btn {
-    padding: 5px 10px; 
-    font-size: 8px; 
-    border-width: 1px; 
-    border-radius: 7.5px; 
-    box-shadow: 0 0 7.5px rgba(255, 0, 0, 0.25);
-  }
-
-  /* Post Login Button Before */
-  .post-login-btn::before {
-    width: 75%; 
-    height: 75%; 
-  }
-
-  /* Post Login Button Hover */
-  .post-login-btn:hover {
-    transform: scale(1.015); 
-    box-shadow: 0 0 7.5px rgba(255, 0, 0, 0.35); 
-  }
-
-  /* Play Button */
-  .play-btn {
-    padding: 5px 10px; 
-    font-size: 7px; 
-    border-width: 1px; 
-    text-shadow: 0 0 2.5px #FF0000; 
-  }
-
-  /* Buy Button */
-  .buy-btn {
-    padding: 5px 10px; 
-    font-size: 7px; 
-    border-width: 1px; 
-    text-shadow: 0 0 2.5px #FF0000; 
-  }
-
-  /* UI Overlay */
-  .ui-overlay {
-    width: 100%;
-    height: 100%;
-  }
-
-  /* Player Info */
-  .player-info {
-    width: 90px; 
-    min-height: 50px; 
-    bottom: 5px; 
-    left: 5px; 
-    padding: 6px; 
-    border-width: 5px; 
-    border-radius: 5px; 
-    box-shadow: 0 0 7.5px rgba(255, 0, 0, 0.05); 
-    gap: 5px; 
-  }
-
-  /* Opponent Info */
-  .opponent-info {
-    width: 90px; 
-    min-height: 50px; 
-    top: 5px; 
-    right: 5px; 
-    padding: 6px; 
-    border-width: 5px; 
-    border-radius: 5px; 
-    box-shadow: 0 0 7.5px rgba(255, 0, 0, 0.05); 
-    gap: 5px; 
-  }
-
-  /* Health Bar and Mana Bar */
-  .health-bar,
-  .mana-bar {
-    width: 70px;
-    height: 6px; 
-    border-radius: 3px;
-    margin-top: 3px; 
-    border-width: 0.5px; 
-    box-shadow: inset 0 0 2px rgba(255, 0, 0, 0.075); 
-  }
-
-  /* Health Fill and Mana Fill */
-  .health-fill,
-  .mana-fill {
-    border-radius: 2px 0 0 2px; 
-    box-shadow: 0 0 4px rgba(139, 69, 19, 0.2); 
-  }
-
-  /* Button */
-  button {
-    font-size: 5px; 
-    padding: 3px 6px; 
-    border-width: 0.5px; 
-    border-radius: 4px; 
-    box-shadow: 0 0 5px rgba(255, 0, 0, 0.075); 
-  }
-
-  /* End Turn Button */
-  .end-turn-btn {
-    bottom: 5px; 
-    font-size: 6px; 
-    padding: 3px 6px; 
-  }
-
-  /* Pause Button */
-  .pause-btn {
-    top: 5px;
-    font-size: 6px; 
-    padding: 3px 6px; 
-  }
-
-  /* Right Buttons */
-  .right-buttons {
-    right: 5px; 
-    gap: 4px; 
-  }
-
-  /* Game Log */
-  .game-log {
-    width: 100px; 
-    max-height: 100px; 
-    font-size: 5px; 
-    padding: 4px; 
-    border-width: 5px; 
-    border-radius: 3px; 
-    box-shadow: inset 0 0 4px rgba(255, 0, 0, 0.025); 
-  }
-
-  /* Card Tooltip and Lore Tooltip */
-  .card-tooltip,
-  .lore-tooltip {
-    font-size: 6px; 
-    padding: 5px; 
-    max-width: 150px; 
-    border-width: 0.5px; 
-    border-radius: 4px; 
-    box-shadow: 0 0 7.5px rgba(255, 0, 0, 0.1); 
-  }
-
-  /* How to Play Tooltip */
-  .how-to-play-tooltip {
-    font-size: 6px; 
-    padding: 5px; 
-    max-width: 150px; 
-    top: 20%; 
-    border-width: 5px; 
-    border-radius: 4px; 
-    box-shadow: 0 0 7.5px rgba(255, 0, 0, 0.1); 
-  }
-
-  /* Timer */
-  .timer {
-    font-size: 24px; 
-    text-shadow: 0 0 6px #FF0000, 0 0 10px #FF4500; 
-  }
-
-  /* Button Hover */
-  button:hover,
-  .end-turn-btn:hover,
-  .pause-btn:hover {
-    transform: scale(1.015); 
-    box-shadow: 0 0 5px rgba(255, 0, 0, 0.2);
-  }
-
-  /* Game Stats */
-  .game-stats {
-    width: 90px; 
-    padding: 6px; 
-    bottom: 5px; 
-    right: 5px; 
-    border-width: 5px; 
-    border-radius: 5px; 
-    box-shadow: 0 0 7.5px rgba(255, 0, 0, 0.05); 
-    gap: 5px;
-  }
-
-  /* Game Over Screen */
-  .game-over-screen {
-    padding: 10px; 
-    width: 45%; 
-    max-width: 150px; 
-    border-width: 0.5px; 
-    border-radius: 6px; 
-    box-shadow: 0 0 20px rgba(255, 0, 0, 0.1);
-  }
-
-  /* Game Over Screen Heading */
-  .game-over-screen h2 {
-    font-size: 12px; 
-    margin-bottom: 9px; 
-    text-shadow: 0 0 4px rgba(255, 0, 0, 0.15); 
-  }
-
-  /* Game Over Screen Paragraph */
-  .game-over-screen p {
-    font-size: 7px; 
-    margin-bottom: 12.5px; 
-  }
-
-  /* Game Over Screen Button */
-  .game-over-screen button {
-    font-size: 6px;
-    padding: 4px 8px;
-    margin: 0 4px; 
-  }
-
-  /* Game Over Screen Button Hover */
-  .game-over-screen button:hover {
-    transform: scale(1.015);
-    box-shadow: 0 0 10px rgba(255, 0, 0, 0.25); 
-  }
-
-  /* Fade Pulse Animation */
   @keyframes fadePulse {
-    0% { opacity: 0.35; 
-    }
-    50% { opacity: 0.5; 
-    }
-    100% { opacity: 0.35; 
-    }
+    0% { opacity: 0.35; }
+    50% { opacity: 0.5; }
+    100% { opacity: 0.35; }
   }
 
-  /* Glow Shift Animation */
   @keyframes glowShift {
-    0% { box-shadow: 0 0 2px rgba(255, 0, 0, 0.1); 
-    }
-    50% { box-shadow: 0 0 4px rgba(255, 0, 0, 0.15); 
-    }
-    100% { box-shadow: 0 0 2px rgba(255, 0, 0, 0.1); 
-    }
+    0% { box-shadow: 0 0 2px rgba(255, 0, 0, 0.1); }
+    50% { box-shadow: 0 0 4px rgba(255, 0, 0, 0.15); }
+    100% { box-shadow: 0 0 2px rgba(255, 0, 0, 0.1); }
   }
 
-  /* Timer Pulse Animation */
   @keyframes timerPulse {
-    0% { text-shadow: 0 0 4px #FF0000, 0 0 6px #FF4500; 
-    }
-    50% { text-shadow: 0 0 6px #FF0000, 0 0 9px #FF4500;
-    }
-    100% { text-shadow: 0 0 4px #FF0000, 0 0 6px #FF4500; 
-    }
-  }
-
-  /* Card Container and Card Container New */
-  #card-container,
-  #card-container-new {
-    width: 60px; 
-    height: 90px; 
-    top: 27.5%; 
-    margin-top: 20vh;
-  }
-
-  /* Card */
-  .card {
-    width: 100%;
-    height: 100%;
-    border-radius: 6px; 
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
-    border-width: 0.5px; 
-    box-shadow: 0 0 5px rgba(255, 215, 0, 0.15); 
-  }
-
-  /* Mana Label */
-  #mana-label {
-    font-size: 0.6rem; 
-    left: -60px;
-    padding: 3px 5px; 
-    text-shadow: 0 0 3px #00f0ff; 
-    gap: 3px; 
-  }
-
-  /* Mana Label After */
-  #mana-label::after {
-    font-size: 0.6rem; 
-  }
-
-  /* Attack Label */
-  #attack-label {
-    font-size: 0.6rem; 
-    right: 80px; 
-    padding: 3px 5px; 
-    text-shadow: 0 0 2px #ff4444; 
-  }
-
-  /* Attack Label After */
-  #attack-label::after {
-    font-size: 0.6rem; 
-  }
-
-  /* Health Label */
-  #health-label {
-    font-size: 0.6rem; 
-    left: 70px; 
-    padding: 3px 5px; 
-    text-shadow: 0 0 2px #44ff44; 
-  }
-
-  /* Health Label Before */
-  #health-label::before {
-    font-size: 0.6rem;
-  }
-
-  /* Main */
-  main {
-    padding: 7.5px;
-    text-shadow: 0 0 2.5px #FF0000; 
-  }
-
-  /* Headings */
-  h1, h2 {
-    font-size: 10px;
-    text-shadow: 0 0 5px #FF0000; 
-  }
-
-  /* Paragraph */
-  p {
-    font-size: 7px; 
-  }
-
-  /* Home Link */
-  .home-link {
-    font-size: 7px; 
-    top: 5px; 
-    left: 5px; 
-    text-shadow: 0 0 2.5px #FF0000; 
-  }
-
-  /* Home Link Hover */
-  .home-link:hover {
-    text-shadow: 0 0 4px #FFD700; 
-  }
-
-  /* Masq Navbar */
-  .masq-navbar {
-    gap: 8px; 
-    flex-direction: row;
-    bottom: 0px;
-  }
-
-  /* Nav Link */
-  .nav-link {
-    font-size: 8px;
-    padding: 4px; 
-  }
-
-  
-
-  /* Mute Toggle */
-  .mute-toggle {
-    width: 20px; 
-    height: 20px; 
-    font-size: 10px;
-    bottom: 5px; 
-    left: 5px; 
-  }
-
-  /* Loading Spinner */
-  #loadingSpinner {
-    width: 15px; 
-    height: 15px; 
-  }
-
-  /* Spinner Circle */
-  #loadingSpinner .spinner-circle {
-    border-width: 1.5px;
-  }
-
-  /* Notification Widget */
-  #notification-widget {
-    width: 60px; 
-    bottom: 40px; 
-    right: 10px; 
-    font-size: 0.2rem; 
-    padding: 4px; 
-    border-width: 0.5px;
-    border-radius: 8px; 
-    box-shadow: 0 0 5px rgba(255, 215, 0, 0.25); 
-  }
-
-  /* Notification Title */
-  #notification-title {
-    font-size: 0.25rem; 
-    margin-bottom: 2.5px; 
-    text-shadow: 0 0 3px gold; 
-  }
-
-  /* Notification Countdown */
-  #notification-countdown {
-    font-size: 0.175rem; 
-    margin-bottom: 3px; 
-    text-shadow: 0 0 2px gold;
-  }
-
-  /* Notification Message */
-  #notification-message {
-    font-size: 0.15rem; 
-  }
-
-  /* Notification Images */
-  #notification-images img {
-    width: 15px; 
-    height: 22.5px; 
-    margin: 0 1.5px; 
-    border-radius: 2px; 
-    box-shadow: 0 0 2.5px rgba(255, 215, 0, 0.15);
+    0% { text-shadow: 0 0 4px #FF0000, 0 0 6px #FF4500; }
+    50% { text-shadow: 0 0 6px #FF0000, 0 0 9px #FF4500; }
+    100% { text-shadow: 0 0 4px #FF0000, 0 0 6px #FF4500; }
   }
 }
 
 
-
+/* =============================================================================
+   END OF STYLESHEET
+   ============================================================================= */
