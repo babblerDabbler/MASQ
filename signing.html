@@ -1,0 +1,286 @@
+<!-- signing.html -->
+
+<!DOCTYPE html>
+<html lang="en">  
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Sign In - MASQuerades</title>
+    <meta name="title" content="MASQuerades – $MASQ Token & Card Game on Solana" />
+    <meta name="description" content="Enter the MASQuerade. A legendary, aesthetic token & tactical card game built on Solana. Powered by $MASQ, forged by the masked anon vanguard." />
+    <link rel="icon" type="image/png" href="/assets/logomasq1-g11o.gif" />
+    <link rel="apple-touch-icon" href="/assets/logomasq1-g11o.gif" />
+    <meta name="theme-color" content="#0B0B0B" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto:wght@400;700&family=Cinzel:wght@400;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+</head>
+<body>
+
+    <div id="loadingScreen" class="loading-screen" style="display: none;">
+        <img src="/assets/nullman1-red1.gif" alt="Loading GIF">
+        <div id="loadingText" class="loading-text">Initializing MASQ...</div>
+    </div>
+    <video class="video-bg" autoplay loop muted playsinline preload="auto">
+        <source src="/assets/MASQ1.webm" type="video/webm">
+        Your browser does not support the video tag.
+    </video>
+    <div class="header" id="header">
+        <a href="/">
+            <img src="/assets/logomasq1-g11o.gif" alt="Logo" class="logo">
+        </a>
+        <div class="title-container">
+            <div class="title glow">the MASQuerades</div>
+            <div class="subtitle">$MASQ</div>
+        </div>
+    </div>
+    <audio id="bg-audio" autoplay muted loop>
+        <source src="/assets/bg_score.mp3" type="audio/mpeg">
+    </audio>
+
+    <button id="muteToggle" class="mute-toggle">
+      🔇
+    </button>
+
+    <div class="auth-panel" id="authPanel">
+        <h2>Signup / Login / Play as Guest</h2>
+        <input type="text" id="username" placeholder="Username" autocomplete="off"/>
+        <input type="password" id="password" placeholder="Password"/>
+        <div class="auth-buttons">
+            <button id="signupBtn">Sign Up</button>
+            <button id="loginBtn">Login</button>
+            <button id="guestBtn">Guest</button>
+        </div>
+      <br>
+    </div>
+
+    <div id="postLogin" class="post-login" style="display: none;">
+        <h2 id="welcomeMessage" class="post-login-title">Welcome, Anon</h2>
+        <div class="player-stats" id="playerStats" style="display: none;">
+            <div class="stats-header">Your Legacy</div>
+            <div class="stats-item">
+                <span class="stats-label">Victories:</span>
+                <span class="stats-value" id="postLoginWins">0</span>
+            </div>
+            <div class="stats-item">
+                <span class="stats-label">Defeats:</span>
+                <span class="stats-value" id="postLoginLosses">0</span>
+            </div>
+            <div class="stats-item">
+                <span class="stats-label">Winning Streak:</span>
+                <span class="stats-value" id="postLoginStreak">0</span>
+            </div>
+            <div class="stats-item">
+                <span class="stats-label">Packs Owned:</span>
+                <span class="stats-value" style="font-size: 10px;" id="packsOwned">0</span>
+            </div>
+            <div class="stats-item">
+                <span class="stats-label">Wallet:</span>
+                <span class="stats-value" style="font-size: 8px;" id="walletConn">0</span>
+            </div>
+        </div>
+        <div class="post-login-buttons">
+            <button class="post-login-btn play-btn" id="startGameBtn">PLAY the Game</button>
+            <button class="post-login-btn buy-btn" id="buyPacksBtn">Buy packs</button>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas" style="display: none;"></canvas>
+
+    <div class="ui-overlay" id="gameUI" style="display: none;">
+        <div class="player-info">
+            <div>Health: <span id="playerHealth">30</span> / ∞</div>
+            <div class="health-bar"><div class="health-fill" id="playerHealthFill" style="width: 100%;"></div></div>
+            <div>Mana: <span id="playerMana">1</span>/<span id="playerMaxMana">1</span></div>
+            <div class="mana-bar"><div class="mana-fill" id="playerManaFill" style="width: 100%;"></div></div>
+            <div>Win Streak: <span id="winStreak">0</span></div>
+        </div>
+        <div class="opponent-info">
+            <div>Health: <span id="opponentHealth">30</span> / ∞</div>
+            <div class="health-bar"><div class="health-fill" id="opponentHealthFill" style="width: 100%;"></div></div>
+            <div>Mana: <span id="opponentMana">1</span>/<span id="opponentMaxMana">1</span></div>
+            <div class="mana-bar"><div class="mana-fill" id="opponentManaFill" style="width: 100%;"></div></div>
+        </div>
+        <button class="end-turn-btn" id="endTurnBtn">End Turn</button>
+        <button class="pause-btn" id="pauseBtn">Pause</button>
+        <div class="right-buttons">
+            <button class="how-to-play-btn" id="howToPlayBtn">How to Play</button>
+            <button class="end-game-btn" id="endGameBtn">End Game</button>
+        </div>
+        <div class="game-log" id="gameLog"></div>
+        <div class="card-tooltip" id="cardTooltip"></div>
+        <div class="how-to-play-tooltip" id="howToPlayTooltip"></div>
+        <div class="lore-tooltip" id="loreTooltip"></div>
+        <div class="timer" id="turnTimer">20</div>
+        <div class="game-stats">
+            <div>Total Wins: <span id="totalWins">0</span></div>
+            <div>Total Losses: <span id="totalLosses">0</span></div>
+            <div>Win Streak: <span id="gameWinStreak">0</span></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module">
+        import { signUp, login, getUser, playAsGuest, getUserStats, getUserOwnedSets, getUserWallet } from './auth.js';
+        import { initializeGame } from './game.js';
+
+        function showLoadingScreen(text) {
+            const loadingScreen = document.getElementById("loadingScreen");
+            const loadingText = document.getElementById("loadingText");
+            if (loadingScreen && loadingText) {
+                loadingText.textContent = text;
+                loadingScreen.style.display = "flex";
+                loadingScreen.classList.remove('fade-out');
+            } else {
+                console.error("Loading screen elements not found:", { loadingScreen, loadingText });
+            }
+        }
+
+        function hideLoadingScreen() {
+            const loadingScreen = document.getElementById("loadingScreen");
+            if (loadingScreen) {
+                loadingScreen.classList.add('fade-out');
+                setTimeout(() => {
+                    loadingScreen.style.display = "none";
+                }, 500);
+            } else {
+                console.error("Loading screen element not found");
+            }
+        }
+
+        const audio = document.getElementById('bg-audio');
+        audio.play().catch(err => {
+          console.log("Autoplay blocked:", err);
+        });
+
+        // Signup handler
+        document.getElementById('signupBtn').addEventListener('click', async function() {
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value;
+            try {
+                const result = await signUp(username, password);
+                if (result?.error) {
+                    alert("Signup failed: " + result.error.message);
+                    return;
+                }
+                alert("Signup successful! Please login.");
+            } catch (err) {
+                alert("Signup error: " + err.message);
+            }
+        });
+
+        // Login handler
+        document.getElementById('loginBtn').addEventListener('click', async function() {
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value;
+            try {
+                showLoadingScreen("Loading User Stats...");
+                const result = await login(username, password);
+                if (result?.error || !result?.user) {
+                    hideLoadingScreen();
+                    alert("Login failed: " + (result?.error?.message || "Invalid credentials."));
+                    return;
+                }
+
+                const user = await getUser();
+                if (user) {
+                    console.log("stats:", user.id);
+                    const stats = await getUserStats(user.id);
+                    console.log("stats:", stats.total_wins);
+                    const packs = await getUserOwnedSets(user.id);
+                    const wallet = await getUserWallet(user.id);
+                    console.log("[Login] Wallet fetched:", wallet);
+                    document.getElementById("authPanel").style.display = "none";
+                    document.getElementById("postLogin").style.display = "flex";
+                    document.getElementById("welcomeMessage").textContent = `Welcome, ${result.username}`;
+                    document.getElementById("postLoginWins").textContent = stats.total_wins;
+                    document.getElementById("postLoginLosses").textContent = stats.total_losses;
+                    document.getElementById("postLoginStreak").textContent = stats.win_streak;
+                
+                  
+                    const setNames = packs.map(setId => {
+                      if (setId === 1) return "Default Set";
+                      if (setId === 2) return "Golden Set";
+                      return `Set #${setId}`;
+                    });
+                    document.getElementById('packsOwned').textContent = `${setNames.join(', ') || 'None'}`;
+                  
+                    document.getElementById("walletConn").textContent = wallet;
+                    document.getElementById("playerStats").style.display = "block";
+                    hideLoadingScreen();
+                } else {
+                    hideLoadingScreen();
+                    alert("Login failed: User could not be loaded.");
+                }
+            } catch (err) {
+                hideLoadingScreen();
+                alert("Login error: " + err.message);
+            }
+        });
+
+        // Guest handler
+        document.getElementById('guestBtn').addEventListener('click', async function() {
+            try {
+                showLoadingScreen("Entering as Guest...");
+                const result = await playAsGuest();
+                document.getElementById("authPanel").style.display = "none";
+                document.getElementById("postLogin").style.display = "flex";
+                document.getElementById("welcomeMessage").textContent = `Welcome, ${result.username}`;
+                document.getElementById("postLoginWins").textContent = "0";
+                document.getElementById("postLoginLosses").textContent = "0";
+                document.getElementById("postLoginStreak").textContent = "0";
+                document.getElementById("playerStats").style.display = "block";
+                hideLoadingScreen();
+            } catch (err) {
+                hideLoadingScreen();
+                alert("Guest mode error: " + err.message);
+            }
+        });
+
+        // Start game handler
+        document.getElementById('startGameBtn').addEventListener('click', function() {
+            showLoadingScreen("Starting Game...");
+            document.getElementById("postLogin").style.display = "none";
+            document.getElementById("gameUI").style.display = "block";
+            document.getElementById("gameCanvas").style.display = "block";
+            document.getElementById("header").style.display = "none";
+            window.history.pushState({}, '', '/game');
+            initializeGame();
+        });
+
+        // Buy packs handler
+        document.getElementById('buyPacksBtn').addEventListener('click', function() {
+            window.location.href = 'buy.html';
+        });
+
+        // How to play handler
+        document.getElementById('howToPlayBtn').addEventListener('click', function() {
+            const tooltip = document.getElementById("howToPlayTooltip");
+            tooltip.innerHTML = `
+                <strong>Unveiling the MASQuerade:</strong><br><br>
+                1. <em>Cards in Hand:</em> Behold your arsenal, a collection of veiled powers.<br>
+                2. <em>Drag & Drop:</em> Summon your cards to the battlefield with a graceful sweep.<br>
+                3. <em>Mana Mastery:</em> Each move demands essence—spend wisely, for mana grows with each turn.<br>
+                4. <em>End Turn:</em> Conclude your strategy to unleash queued chaos upon your foe.<br>
+                5. <em>Victory:</em> Reduce your opponent's vitality to naught and claim your dominion.<br><br>
+                Embrace the shadows, outwit your rival, and ascend as a legend beneath the MASQ!
+            `;
+            tooltip.style.display = "block";
+        });
+
+        // Mute toggle
+        const muteToggle = document.getElementById('muteToggle')
+        audio.muted = true;
+
+        muteToggle.addEventListener('click', () => {
+            audio.muted = !audio.muted;
+            muteToggle.textContent = audio.muted ? '🔇' : '🔊';
+            if (!audio.muted && audio.paused) {
+                audio.play().catch(err => console.log("Autoplay blocked:", err));
+            }
+        });
+      
+    </script>
+</body>
+</html>
