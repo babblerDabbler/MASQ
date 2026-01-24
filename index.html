@@ -1,0 +1,325 @@
+<!-- index.html -->
+
+<!DOCTYPE html>
+<html lang="en">  
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>MASQuerades – $MASQ</title>
+    <meta name="title" content="MASQuerades – $MASQ Token & Card Game on Solana" />
+    <meta name="description" content="Enter the MASQuerade. A legendary, aesthetic token & tactical card game built on Solana. Powered by $MASQ, forged by the masked anon vanguard." />
+    <link rel="icon" type="image/png" href="/assets/logomasq1-g11o.gif" />
+    <link rel="apple-touch-icon" href="/assets/logomasq1-g11o.gif" />
+    <meta name="theme-color" content="#0B0B0B" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://masq.club/" />
+    <meta property="og:title" content="MASQuerades – $MASQ Token & Card Game on Solana" />
+    <meta property="og:description" content="Step into the masked realm. Just pure anon-powered gameplay and decentralized art." />
+    <meta property="og:image" content="/assets/logomasq1-g11o.gif" />
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://x.com/MASQ_game" />
+    <meta property="twitter:title" content="MASQuerades – $MASQ Token & Card Game on Solana" />
+    <meta property="twitter:description" content="Join the masked vanguard of Solana. Play. Collect. Conquer. One token. Infinite strategy." />
+    <meta property="twitter:image" content="/assets/logomasq1-g11o.gif" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto:wght@400;700&family=Cinzel:wght@400;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css"/>
+    <script src="https://public.bnbstatic.com/unpkg/growth-widget/cryptoCurrencyWidget@0.0.20.min.js"></script>
+</head>
+<body>
+
+    <div id="loadingScreen" class="loading-screen" style="display: none;">
+        <img src="/assets/nullman1-red1.gif" alt="Loading GIF">
+        <div id="loadingText" class="loading-text">Initializing MASQ...</div>
+    </div>
+    <video class="video-bg" autoplay loop muted playsinline preload="auto">
+        <source src="/assets/MASQ1.webm" type="video/webm">
+        Your browser does not support the video tag.
+    </video>
+    <div class="header" id="header">
+        <a href="/">
+            <img src="/assets/logomasq1-g11o.gif" alt="Logo" class="logo">
+        </a>
+        <div class="title-container">
+            <div class="title glow">the MASQuerades</div>
+            <div class="subtitle">$MASQ</div>
+        </div>
+    </div>
+    <audio id="bg-audio" autoplay muted loop>
+        <source src="/assets/bg_score.mp3" type="audio/mpeg">
+    </audio>
+
+      <button id="muteToggle" class="mute-toggle">
+      🔇
+    </button>
+    <div id="homepage" class="homepage">
+
+        <div class="typewriter-container">
+            <div class="typewriter-text glow"><span id="line1"> > </span><span class="cursor"></span></div>
+            <div class="typewriter-text glow"><span id="line2"> > </span><span class="cursor"></span></div>
+            <div class="typewriter-text glow"><span id="line3"> > </span><span class="cursor"></span></div>
+            <div class="typewriter-text glow"><span id="line4"> > </span><span class="cursor"></span></div>
+            <div class="typewriter-text glow"><span id="line5"> > </span><span class="cursor"></span></div>
+            <div class="typewriter-text glow"><span id="line6"> > </span><span class="cursor"></span></div>
+            <br>
+            <span id="copyCA" class="ca-line glow" title="Tap to copy">CA: </span>
+        </div>
+        
+            <div class="clickable-word glow">
+                <div id="masqNav" class="masq-navbar">                
+                    <a class="nav-link" href="about">About</a>
+                    <a class="nav-link" href="cards">Cards</a>
+                    <a class="nav-link" href="whitepaper">Whitepaper</a>
+                    <a class="nav-link" href="https://github.com/masqMaster/MASQ" target="_blank" rel="noopener noreferrer">Github</a>
+                    <a class="nav-link" href="roadmap">Roadmap</a>
+                    <a class="nav-link" href="https://x.com/MASQ_game" target="_blank" rel="noopener noreferrer">Twitter</a>
+                </div>    
+            </div>
+        
+
+    <ul class="angled-btn-group">
+        <li>
+          <a href="signing">
+            <i class="fa fa-play" aria-hidden="true"></i>
+            <span>PLAY GAME</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" onclick="navigateTo('https://pump.fun/')">
+            <i class="fa fa-shopping-cart" aria-hidden="true"></i>
+            <span>BUY $MASQ</span>
+          </a>
+        </li>
+        <li>
+          <a href="buy">
+            <i class="fa fa-buy" aria-hidden="true"></i>
+            <span>STORE</span>
+          </a>
+        </li>
+        <li>
+          <a href="holders">
+            <i class="fa fa-users" aria-hidden="true"></i>
+            <span>HOLDERS</span>
+          </a>
+        </li>
+        <li>
+          <a href="leaders">
+            <i class="fa fa-users" aria-hidden="true"></i>
+            <span>LEADERS</span>
+          </a>
+        </li>
+      </ul>
+        
+
+      
+<div id="card-container">
+  <div id="mana-label">MANA</div>
+  <div id="attack-label">ATTACK</div>
+  <div id="health-label">HEALTH</div>
+  <img src="/cards/a57.webp" class="card" />
+  <img src="/cards/a45.webp" class="card" />
+  <img src="/cards/a65.webp" class="card" />
+  <img src="/cards/a66.webp" class="card" />
+  <img src="/cards/a59.webp" class="card" />
+  <img src="/cards/a63.webp" class="card" />
+  <img src="/cards/a64.webp" class="card" />
+  <img src="/cards/a10.webp" class="card" />
+  <img src="/cards/a47.webp" class="card" />
+  <img src="/cards/a63.webp" class="card" />
+</div>
+
+      <div id="notification-widget" onclick="window.location.href='buy'">
+         <div id="notification-countdown"></div> 
+        <div id="notification-title">New Golden Pack Launch!</div>
+        <div id="notification-message">Buy now with $MASQ</div>
+        <div id="notification-images">
+          <img src="/cards/g1.webp" class="card" />
+          <img src="/cards/g2.webp" class="card" />
+          <img src="/cards/g3.webp" class="card" />
+          <img src="/cards/g4.webp" class="card" />
+          <img src="/cards/g5.webp" class="card" />
+          <img src="/cards/g1.webp" class="card" />
+          <img src="/cards/g2.webp" class="card" />
+          <img src="/cards/g3.webp" class="card" />
+          <img src="/cards/g4.webp" class="card" />
+          <img src="/cards/g5.webp" class="card" />
+        </div>
+      </div>
+
+    </div>
+    <canvas id="gameCanvas" style="display: none;"></canvas>
+
+<!--     <div id="mobileMessage" style="display: none;">
+      Sorry, MASQ is not available on smaller devices yet.
+    </div> -->
+    <!-- Scripts -->
+    <script>
+        function showLoadingScreen(text) {
+            const loadingScreen = document.getElementById("loadingScreen");
+            const loadingText = document.getElementById("loadingText");
+            if (loadingScreen && loadingText) {
+                loadingText.textContent = text;
+                loadingScreen.style.display = "flex";
+                loadingScreen.classList.remove('fade-out');
+            } else {
+                console.error("Loading screen elements not found:", { loadingScreen, loadingText });
+            }
+        }
+
+        function hideLoadingScreen() {
+            const loadingScreen = document.getElementById("loadingScreen");
+            if (loadingScreen) {
+                loadingScreen.classList.add('fade-out');
+                setTimeout(() => {
+                    loadingScreen.style.display = "none";
+                }, 500);
+            } else {
+                console.error("Loading screen element not found");
+            }
+        }
+
+        const loadingScreen = document.getElementById('loadingScreen');
+        const audio = document.getElementById('bg-audio');
+        audio.play().catch(err => {
+          console.log("Autoplay blocked:", err);
+        });
+        
+          showLoadingScreen("Initializing MASQ...");
+          setTimeout(() => {
+              hideLoadingScreen();
+              document.getElementById("homepage").style.display = "block";
+              document.getElementById("header").style.display = "flex";
+          }, 100);
+
+      const lines = [
+          "Greetings, voyager of the boundless digital void",
+          "MASQuerades is the first of its kind: a free-to-play, fully on-chain digital collectible card game blending strategy, blockchain, and mind games",
+          "Battle Grok — powered by xAPI  — and refine your deck through tactical duels, adaptive challenges, and dynamic matchups.",
+          "Native $MASQ cryptocurrency powers in-game purchases — buy packs, flex your decks, and own your digital cards",
+          "The first exclusive Golden packs are already available for purchase using $MASQ, for limited time",
+          "Future updates will bring multiplayer tournaments, cross-chain expansions, and a dedicated MASQ app for seamless gameplay anywhere",
+          "CA: "
+      ];
+      let currentLine = 0;
+      let currentChar = 0;
+
+      function typeWriter() {
+          if (currentChar < lines[currentLine].length) {
+              const currentLineElement = document.getElementById(`line${currentLine + 1}`);
+              const currentCharElement = document.createElement('span');
+              const currentCharValue = lines[currentLine].charAt(currentChar);
+
+              if (currentCharValue === '<' && lines[currentLine].charAt(currentChar + 1) === 's') {
+                  const closingTagIndex = lines[currentLine].indexOf('>', currentChar);
+                  currentChar = closingTagIndex + 1;
+              } else {
+                  currentCharElement.textContent = currentCharValue;
+                  currentLineElement.appendChild(currentCharElement);
+                  currentChar++;
+                  
+              }
+          } else {
+              currentLine++;
+              currentChar = 0;
+              if (currentLine >= lines.length) {
+                  clearInterval(window.typeWriterInterval);
+                  
+              }
+          }
+      }
+
+      window.typeWriterInterval = setInterval(typeWriter, 50);
+
+        window.navigateTo = function(page) {
+            window.location.href = page;
+        };
+
+        const cards = document.querySelectorAll('.card');
+
+        function shuffleCards() {
+            cards.forEach((card, i) => {
+                card.style.transform = 'rotateY(90deg)';
+                card.style.opacity = 0;
+
+                setTimeout(() => {
+                    const offsetX = Math.random() * 100 - 50;
+                    const offsetY = Math.random() * 80 - 40;
+                    const rotate = Math.random() * 20 - 10;
+
+                    card.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(${rotate}deg) rotateY(0deg)`;
+                    card.style.opacity = 1;
+                    card.style.zIndex = i;
+                }, 300 + i * 100);
+            });
+
+            setTimeout(() => {
+                cards.forEach((card, i) => {
+                    card.style.transform = `translate(0px, 0px) rotate(0deg) rotateY(0deg)`;
+                    card.style.zIndex = cards.length - i;
+                });
+            }, 2000);
+        }
+
+        shuffleCards();
+        setInterval(shuffleCards, 2000);
+      
+      function toggleTokenomics() {
+    const popup = document.getElementById('tokenomicsPopup');
+    popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
+}
+      
+const targetTimeEST = new Date('2025-10-23T17:30:00-04:00');
+function updateCountdown() {
+  const now = new Date();
+  const diff = targetTimeEST - now;
+
+  if (diff > 0) {
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const seconds = Math.floor((diff / 1000) % 60);
+
+    document.getElementById('notification-countdown').textContent =
+      `${days}d ${hours}h ${minutes}m ${seconds}s`;
+  } else {
+    document.getElementById('notification-countdown').textContent =
+      "0d 0h 0m 0s";
+  }
+}
+
+updateCountdown();
+setInterval(updateCountdown, 1000);
+
+  const muteToggle = document.getElementById('muteToggle')
+  audio.muted = true;
+
+  muteToggle.addEventListener('click', () => {
+    audio.muted = !audio.muted;
+    muteToggle.textContent = audio.muted ? '🔇' : '🔊';
+    if (!audio.muted && audio.paused) {
+      audio.play().catch(err => console.log("Autoplay blocked:", err));
+    }
+  });
+
+ if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    document.getElementById('mobileMessage').style.display = 'block';
+    document.body.querySelectorAll('*:not(#mobileMessage)').forEach(el => {
+      el.style.display = 'none';
+    });
+  }
+
+document.getElementById("copyCA").addEventListener("click", function () {
+    const address = this.textContent.replace("CA: ", "").trim();
+    navigator.clipboard.writeText(address).then(() => {
+      this.classList.add("copied");
+      this.textContent = "Copied!";
+      setTimeout(() => {
+        this.classList.remove("copied");
+        this.textContent = "CA: " + address;
+      }, 1500);
+    });
+  });
+      
+    </script>
+</body>
+</html>
