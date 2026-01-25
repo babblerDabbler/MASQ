@@ -272,7 +272,7 @@ button:hover {
    Used by: index.html
    ============================================================================= */
 
-.typewriter-container {
+/* .typewriter-container {
   margin-top: 10vh;
   z-index: 1001;
   text-align: center;
@@ -285,6 +285,25 @@ button:hover {
   font-family: 'Roboto', sans-serif;
   margin: 10px 0;
   text-shadow: 0 0 5px #FF0000;
+} */
+.typewriter-container {
+  position: fixed;
+  top: calc(7vh + 10px);
+  left: 0;
+  right: 0;
+  z-index: 1001;
+  text-align: center;
+  padding: 12px 20px;
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.8), transparent);
+}
+
+.typewriter-text {
+  color: #FFD700;
+  font-size: 13px;
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  text-shadow: 0 0 8px #FF0000;
+  letter-spacing: 1px;
 }
 
 .glow {
