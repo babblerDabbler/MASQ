@@ -78,20 +78,20 @@ export const cardSets = [
             { id: 67, name: "Node Librarian", cost: 4, attack: 2, health: 3, ability: "Draw 2 cards. If both are unique types, gain +1 mana next turn.", texture: "/cards/a67.webp", weight: 3, lore: "Curates the knowledge of every node, connecting ideas across fractured data streams." },
             { id: 68, name: "Hyperledger Oracle", cost: 7, attack: 4, health: 6, ability: "Draw 3 cards. If any of those 3 cards is a draw card, draw number of cards equal to the first draw card again.", texture: "/cards/a68.webp", weight: 1, lore: "Its memory spans every fork, recalling futures where knowledge becomes cheaper." },
             { id: 74, name: "Bonk Pup", cost: 0, attack: 5, health: 3, ability: "Battlecry: Draw a card. If it costs 2 or less, gain +1 Attack this turn.", texture: "/cards/a69.webp", weight: 4,lore: "A scrappy Solana street pup, scrounging dust and sparking community chaos."},
-            { id: 75, name: "Pump.fun Meme Forge", cost: 10, attack: 10, health: 10, ability: "Battlecry: Create two 1‑cost Meme Tokens with 5/5 stats (vanish at end of turn).", texture: "/cards/a71.webp", weight: 1, lore: "A turbocharged minting rig spewing meme monsters in waves, burning bright before the dump."},
+            { id: 75, name: "Pump.fun Meme Forge", cost: 10, attack: 10, health: 10, ability: "Battlecry: Create two 1‑cost Meme Tokens with 5/5 stats (vanish at end of turn).", texture: "/cards/a70.webp", weight: 1, lore: "A turbocharged minting rig spewing meme monsters in waves, burning bright before the dump."},
             { 
               id: 76, 
               name: "Masquerade Inu", 
               cost: 8, 
               attack: 4, 
               health: 6, 
-              texture: "/cards/a72.webp", 
+              texture: "/cards/a73.webp", 
               weight: 3, 
               lore: "Slipping through candlelit shadows, it weaponizes illusion, striking harder the richer the moment." 
             },
-            { id: 77, name: "Masquerade Labubu", cost: 4, attack: 3, health: 5, texture: "/cards/a71.webp", weight: 3, lore: "Behind velvet masks and painted smiles, it orchestrates pain that lingers long after the curtain falls." },
+            { id: 77, name: "Masquerade Labubu", cost: 4, attack: 3, health: 5, texture: "/cards/a72.webp", weight: 3, lore: "Behind velvet masks and painted smiles, it orchestrates pain that lingers long after the curtain falls." },
             { id: 78, name: "Openclaw", cost: 5, attack: 4, health: 4, texture: "/cards/a74.webp", weight: 4, lore: "It counts every reckless move, then answers with crushing force from the depths." },
-            { id: 79, name: "Nietzschean Penguin", cost: 3, attack: 2, health: 6, texture: "/cards/a73.webp", weight: 2, lore: "Staring into the abyss with quiet resolve, it teaches that endurance itself is a moral act." }
+            { id: 79, name: "Nietzschean Penguin", cost: 3, attack: 2, health: 6, texture: "/cards/a71.webp", weight: 2, lore: "Staring into the abyss with quiet resolve, it teaches that endurance itself is a moral act." }
         ],
   },
   {
