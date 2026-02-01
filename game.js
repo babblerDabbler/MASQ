@@ -24,6 +24,15 @@ export const gameState = {
   computerReady: false,
   userId: null,
   lastAbilityUsed: null,
+  // --- New: per-turn mana snapshot + lingering damage (for Masquerade Labubu) ---
+  playerTurnStartMana: 1,
+  opponentTurnStartMana: 1,
+
+  // Lingering damage applied at the start of each new turn
+  playerDotDamage: 0,
+  playerDotTurns: 0,
+  opponentDotDamage: 0,
+  opponentDotTurns: 0,
 };
 
 
@@ -432,6 +441,32 @@ export function resolveTurn() {
       let attack = card.data.attack || 0;
       let health = card.data.health || 0;
 
+      if (card.data.name === "Masquerade Inu") {
+        const spent = Math.max(0, gameState.playerTurnStartMana - gameState.player.mana);
+        const bonus = Math.floor(spent / 2);
+        attack += bonus;
+        if (bonus > 0) log(`Masquerade Inu feeds on the moment: +${bonus} Attack (spent ${spent} mana).`);
+      }
+
+      if (card.data.name === "Masquerade Labubu") {
+        gameState.opponentDotDamage = 2;
+        gameState.opponentDotTurns += 2; // stack duration
+        log("Masquerade Labubu curses the opponent: lingering pain (2 damage for 2 turns).");
+      }
+
+      if (card.data.name === "Openclaw") {
+        const q = gameState.opponent.queuedCards.length;
+        attack += q;
+        if (q > 0) log(`Openclaw counts reckless moves: +${q} Attack (opponent queued ${q}).`);
+      }
+
+      if (card.data.name === "Nietzschean Penguin") {
+        let bonusHeal = 2;
+        if (gameState.player.health <= 15) bonusHeal += 2;
+        health += bonusHeal;
+        log(`Nietzschean Penguin endures: +${bonusHeal} extra heal.`);
+      }
+
       if (card.data.ability?.includes("Combo") && playerLastCard) {
         if (card.data.name === "Yield Nexus" && playerLastCard.data.name === "Quantum Seer") {
           attack += 2;
@@ -587,6 +622,32 @@ export function resolveTurn() {
     gameState.opponent.queuedCards.forEach(card => {
       let attack = card.data.attack || 0;
       let health = card.data.health || 0;
+
+      if (card.data.name === "Masquerade Inu") {
+        const spent = Math.max(0, gameState.opponentTurnStartMana - gameState.opponent.mana);
+        const bonus = Math.floor(spent / 2);
+        attack += bonus;
+        if (bonus > 0) log(`Opponent Masquerade Inu feeds on the moment: +${bonus} Attack (spent ${spent} mana).`);
+      }
+
+      if (card.data.name === "Masquerade Labubu") {
+        gameState.playerDotDamage = 2;
+        gameState.playerDotTurns += 2; // stack duration
+        log("Opponent Masquerade Labubu curses you: lingering pain (2 damage for 2 turns).");
+      }
+
+      if (card.data.name === "Openclaw") {
+        const q = gameState.player.queuedCards.length;
+        attack += q;
+        if (q > 0) log(`Opponent Openclaw counts reckless moves: +${q} Attack (you queued ${q}).`);
+      }
+
+      if (card.data.name === "Nietzschean Penguin") {
+        let bonusHeal = 2;
+        if (gameState.opponent.health <= 15) bonusHeal += 2;
+        health += bonusHeal;
+        log(`Opponent Nietzschean Penguin endures: +${bonusHeal} extra heal.`);
+      }
 
       if (card.data.ability?.includes("Combo") && opponentLastCard) {
         if (card.data.name === "Yield Nexus" && opponentLastCard.data.name === "Quantum Seer") {
@@ -763,6 +824,31 @@ export function startTurnTimer() {
   gameState.isTurnActive = true;
   gameState.playerReady = false;
   gameState.computerReady = false;
+
+  // Snapshot mana at start of turn (used by Masquerade Inu)
+  gameState.playerTurnStartMana = gameState.player.mana;
+  gameState.opponentTurnStartMana = gameState.opponent.mana;
+
+  // Apply lingering damage at the start of the turn (Masquerade Labubu)
+  if (gameState.playerDotTurns > 0 && gameState.playerDotDamage > 0) {
+    gameState.player.health -= gameState.playerDotDamage;
+    gameState.playerDotTurns -= 1;
+    log(`Lingering pain hits you for ${gameState.playerDotDamage} (Health: ${gameState.player.health})`);
+    if (gameState.playerDotTurns <= 0) {
+      gameState.playerDotDamage = 0;
+      log("The lingering pain on you fades.");
+    }
+  }
+
+  if (gameState.opponentDotTurns > 0 && gameState.opponentDotDamage > 0) {
+    gameState.opponent.health -= gameState.opponentDotDamage;
+    gameState.opponentDotTurns -= 1;
+    log(`Lingering pain hits opponent for ${gameState.opponentDotDamage} (Health: ${gameState.opponent.health})`);
+    if (gameState.opponentDotTurns <= 0) {
+      gameState.opponentDotDamage = 0;
+      log("The lingering pain on opponent fades.");
+    }
+  }
   
   const turnTimerElement = document.getElementById('turnTimer');
   turnTimerElement.style.display = 'block';
