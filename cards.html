@@ -371,7 +371,7 @@
 
         ];
 
-        cardLibrary.sort((a, b) => a.cost - b.cost);
+        cardLibrary.sort((a, b) => (b.cost ?? 0) - (a.cost ?? 0));
 
         document.addEventListener('DOMContentLoaded', () => {
             // Populate the gallery
