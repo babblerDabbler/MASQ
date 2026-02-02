@@ -3,302 +3,757 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Store</title>
+<title>Store | The MASQuerades</title>
 <link rel="icon" type="image/png" href="/assets/logomasq1-g11o.gif" />
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto:wght@400;700&family=Cinzel:wght@400;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Roboto:wght@300;400;500;700&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="styles.css" />
 <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
 <script type="module" src="buy.js"></script>
 <style>
-  .auth-panel {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(20, 20, 20, 0.95);
-    border: 1px solid #FFD700;
-    border-radius: 12px;
-    padding: 30px;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    box-shadow: 0 0 20px #FF0000;
-    border: 20px solid transparent;
-    border-image: url('/assets/button2.png') 300 round;
+  * {
+    box-sizing: border-box;
   }
 
-  .auth-panel h2 {
-    font-family: 'Cinzel', serif;
-    color: #FFD700;
-    margin-bottom: 15px;
-    text-shadow: 0 0 5px #FF0000;
+  body {
+    display: block;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
-  .auth-panel input {
-    width: 220px;
-    margin: 8px 0;
-    padding: 8px;
-    border: none;
-    border-radius: 5px;
-    font-size: 0.9rem;
-  }
-
-  .auth-panel .auth-buttons button {
-    margin: 5px;
-    width: 120px;
-    background: rgba(255, 215, 0, 0.9);
-    text-shadow: 0 0 5px #FF0000;
-    color: white;
-    font-weight: bold;
-    box-shadow: 0 0 10px #FF0000;
-    background: linear-gradient(90deg, #2B2B2B, #3C3C3C);
-    border: 10px solid transparent;
-    border-image: url('/assets/button2.png') 300 round;
-  }
-
-  .auth-panel .auth-buttons button:hover {
-    background: #FF0000;
-    color: #FFD700;
-  }
-
-  /* Video background */
-  video.video-bg {
+  /* Background */
+  .store-bg {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    z-index: -1;
-    opacity: 0.8;
+    z-index: -2;
+    opacity: 0.6;
   }
 
-#interactionContainer {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  width: 90%;
-  max-width: 1000px;
-  margin: 2rem auto;
-  gap: 2rem;
-}
+  .store-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.8) 100%);
+    z-index: -1;
+  }
 
-#leftColumn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+  /* Main Store Container */
+  .store-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 100px 20px 60px;
+    min-height: 100vh;
+  }
 
-#rightColumn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 20px;
-  color: gold;
-  font-family: 'Cinzel', serif;
-  min-width: 250px;
-  text-align: center;
-}
+  /* Store Header */
+  .store-header {
+    text-align: center;
+    margin-bottom: 50px;
+  }
 
-#rightColumn h2 {
-  color: #FFD700;
-  margin-bottom: 1rem;
-  font-size: 1.1rem;
-  text-shadow: 0 0 4px #FF0000;
-}
+  .store-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 3rem;
+    font-weight: 900;
+    color: #FFD700;
+    text-shadow: 0 0 30px rgba(255, 215, 0, 0.5), 0 0 60px rgba(255, 0, 0, 0.3);
+    margin-bottom: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
 
-#userInfo, #status, #ownedSets, #balance {
-  font-size: 0.9rem;
-  color: #FFD700;
-  text-shadow: 0 0 2px #FF0000;
-  padding: 15px 25px;
-  width: fit-content;
-  max-width: 100%;
-  line-height: 1.5;
-  display: none; 
-  transition: box-shadow 0.3s ease, transform 0.2s ease;
-  backdrop-filter: blur(6px);
-  text-align: left;
-}
+  .store-subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    color: #aaa;
+    letter-spacing: 2px;
+  }
 
-#connectWalletBtn,
-#buyPackBtn {
-  display: block;
-  margin: 12px auto;
-  padding: 14px 28px;
-  font-family: 'Cinzel', serif;
-  font-size: 16px;
-  color: #FFD700;
-  border-radius: 12px;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  background: linear-gradient(90deg, #2B2B2B, #3C3C3C);
-  border: 10px solid transparent;
-  border-image: url('/assets/button2.png') 300 round;
-  box-shadow: 0 0 15px rgba(255, 0, 0, 0.5), inset 0 0 5px rgba(255, 215, 0, 0.2);
-  transition: all 0.3s ease;
-}
+  /* Main Content Grid */
+  .store-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+  }
 
-#connectWalletBtn:hover,
-#buyPackBtn:hover {
-  background: linear-gradient(145deg, #2c2c2c, #3a3a3a);
-  box-shadow: 0 0 25px rgba(255, 0, 0, 0.8), 0 0 35px rgba(255, 69, 0, 0.4);
-  transform: scale(1.05);
-  color: #ffffff;
-}
+  /* Pack Showcase Section */
+  .pack-showcase {
+    background: linear-gradient(135deg, rgba(26, 26, 26, 0.95), rgba(43, 43, 43, 0.4));
+    border: 50px solid transparent;
+    border-image: url('/assets/button2.png') 300 round;
+    border-radius: 12px;
+    padding: 30px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.15), inset 0 0 6px rgba(255, 0, 0, 0.1);
+  }
 
-#userInfo strong {
-  color: #FF0000;
-  font-weight: 600;
-}
+  .pack-showcase::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(from 0deg, transparent, rgba(255, 215, 0, 0.1), transparent 30%);
+    animation: rotate 10s linear infinite;
+  }
 
-#status:hover, #userInfo:hover, #ownedSets:hover, #balance:hover {
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.7), inset 0 0 10px rgba(255, 0, 0, 0.6);
-  transform: translateY(-2px) scale(1.02);
-}
+  @keyframes rotate {
+    100% { transform: rotate(360deg); }
+  }
 
-  
-#buy-widget {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.85);
-  border: 1px solid gold;
-  border-radius: 16px;
-  box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
-  padding: 20px;
-  margin-bottom: 20px;
-  color: gold;
-  font-family: 'Orbitron', sans-serif;
-  text-align: left;
-  max-width: 300px;
-  margin: 0 auto 20px auto;
-  animation: pulse 1s infinite alternate;
-  border: 10px solid transparent;
-  border-image: url('/assets/button2.gif') 300 round;
-  margin-top: 1rem;
-}
+  .pack-content {
+    position: relative;
+    z-index: 1;
+  }
 
-#buy-widget h1 {
-  font-size: 1rem;
-  margin-bottom: 10px;
-  text-shadow: 0 0 6px gold;
-}
+  .pack-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #8B0000, #FF0000);
+    color: #FFD700;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 10px rgba(255, 0, 0, 0.4);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
 
-#buy-widget-image {
-  width: 120px;
-  height: auto;
-  border-radius: 8px;
-  box-shadow: 0 0 6px rgba(255, 215, 0, 0.3);
-}
+  .pack-title {
+    font-family: 'Cinzel', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #FFD700;
+    margin-bottom: 8px;
+    text-shadow: 0 0 10px #FF0000, 0 0 20px #FF4500;
+  }
 
+  .pack-description {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.95rem;
+    color: #ccc;
+    margin-bottom: 25px;
+    line-height: 1.6;
+  }
 
+  .pack-image-container {
+    display: flex;
+    justify-content: center;
+    margin: 30px 0;
+  }
 
-@media (max-width: 768px) {
-  #interactionContainer {
-    width: 95%;
-    max-width: 100%;
-    margin: 1rem auto;
-    gap: 1rem;
+  .pack-image {
+    width: 180px;
+    height: auto;
+    border-radius: 12px;
+    box-shadow:
+      0 0 30px rgba(255, 215, 0, 0.4),
+      0 0 60px rgba(255, 0, 0, 0.2);
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .pack-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 25px;
+  }
+
+  .detail-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 215, 0, 0.05);
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    transition: all 0.2s ease;
+  }
+
+  .detail-item:hover {
+    background: rgba(255, 215, 0, 0.1);
+    border-color: rgba(255, 215, 0, 0.4);
+  }
+
+  .detail-icon {
+    font-size: 1rem;
+    color: #FFD700;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+  }
+
+  .detail-text {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.8rem;
+    color: #ccc;
+  }
+
+  .pack-price {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: linear-gradient(135deg, rgba(139, 0, 0, 0.3), rgba(255, 0, 0, 0.15));
+    padding: 18px 24px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 0, 0, 0.4);
+    margin-bottom: 20px;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .price-label {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.9rem;
+    color: #aaa;
+  }
+
+  .price-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #FFD700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  }
+
+  .price-token {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    color: #FF0000;
+    font-weight: 600;
+    text-shadow: 0 0 5px #FF0000;
+  }
+
+  /* Card Preview Section */
+  .card-preview-section {
+    background: linear-gradient(135deg, rgba(26, 26, 26, 0.95), rgba(43, 43, 43, 0.4));
+    border: 50px solid transparent;
+    border-image: url('/assets/button2.png') 300 round;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.15), inset 0 0 6px rgba(255, 0, 0, 0.1);
+  }
+
+  .preview-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.3rem;
+    color: #FFD700;
+    margin-bottom: 25px;
+    text-align: center;
+    text-shadow: 0 0 10px #FF0000, 0 0 20px #FF4500;
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  .cards-grid .preview-card:nth-child(4),
+  .cards-grid .preview-card:nth-child(5) {
+    grid-column: span 1;
+  }
+
+  .cards-row-bottom {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 15px;
+  }
+
+  .preview-card {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  .preview-card:hover {
+    transform: scale(1.08) translateY(-5px);
+    box-shadow:
+      0 10px 30px rgba(255, 215, 0, 0.3),
+      0 0 40px rgba(255, 0, 0, 0.2);
+    z-index: 10;
+  }
+
+  .preview-card img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    border-radius: 8px;
+    transition: border-color 0.3s ease;
+  }
+
+  .preview-card:hover img {
+    border-color: rgba(255, 215, 0, 0.7);
+  }
+
+  .preview-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, transparent 70%, rgba(0,0,0,0.4) 100%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .preview-card:hover::after {
+    opacity: 1;
+  }
+
+  .cards-row-bottom .preview-card {
+    width: 30%;
+    max-width: 120px;
+  }
+
+  /* Purchase Section */
+  .purchase-section {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, rgba(26, 26, 26, 0.95), rgba(43, 43, 43, 0.4));
+    border: 50px solid transparent;
+    border-image: url('/assets/button2.png') 300 round;
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.15), inset 0 0 6px rgba(255, 0, 0, 0.1);
+  }
+
+  .purchase-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem;
+    color: #FFD700;
+    margin-bottom: 30px;
+    text-shadow: 0 0 10px #FF0000, 0 0 20px #FF4500;
+  }
+
+  .purchase-steps {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 35px;
+    flex-wrap: wrap;
+  }
+
+  .step {
+    display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
+    gap: 10px;
   }
 
-  #leftColumn {
-    width: 100%;
+  .step-number {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #8B0000, #FF0000);
+    border: none;
+    border-radius: 50%;
+    display: flex;
     align-items: center;
-  }
-
-  #rightColumn {
-    width: 100%;
-    min-width: auto;
-    padding: 14px;
-    text-align: center;
-    align-items: center;
-    font-size: 0.95rem;
-  }
-
-  #rightColumn h2 {
-    font-size: 1rem;
-    margin-bottom: 0.75rem;
-  }
-
-
-  #userInfo,
-  #status,
-  #ownedSets,
-  #balance {
-    width: 100%;
-    max-width: 420px;
-    padding: 10px 14px;
+    justify-content: center;
+    font-family: 'Orbitron', sans-serif;
     font-size: 0.9rem;
-    line-height: 1.45;
-    text-align: center;  
+    font-weight: 700;
+    color: #FFD700;
+    box-shadow: 0 2px 10px rgba(255, 0, 0, 0.4);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   }
 
-  #userInfo strong {
-    font-weight: 600;
-  }
-
-  #connectWalletBtn,
-  #buyPackBtn {
-    width: 100%;
-    max-width: 320px;
-    margin: 10px auto;
-    padding: 12px 16px;
-    font-size: 15px;
-    border-width: 8px;           
-    border-image-slice: 300;
-  }
-
-  #connectWalletBtn:hover,
-  #buyPackBtn:hover {
-    transform: scale(1.03);       
-    box-shadow: 0 0 18px rgba(255, 0, 0, 0.6), 0 0 24px rgba(255, 69, 0, 0.35);
-  }
-
-  #buy-widget {
-    max-width: 280px;
-    margin: 0 auto 14px auto;
-    padding: 16px;
-    border-width: 8px;           
+  .step-text {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.85rem;
+    color: #aaa;
+    max-width: 120px;
     text-align: center;
   }
 
-  #buy-widget h1 {
-    font-size: 0.95rem;
-    margin-bottom: 8px;
+  .step-arrow {
+    color: #FFD700;
+    font-size: 1.5rem;
+    align-self: center;
+    opacity: 0.5;
   }
 
-  #buy-widget-image {
-    width: 96px;
-    height: auto;
+  /* Buttons */
+  .btn-primary {
+    display: inline-block;
+    padding: 16px 40px;
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #FFD700;
+    background: linear-gradient(135deg, #2B2B2B, #3C3C3C);
+    border: 2px solid #FFD700;
     border-radius: 8px;
-    box-shadow: 0 0 4px rgba(255, 215, 0, 0.25);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+    margin: 10px;
   }
-}
 
+  .btn-primary:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.4), 0 0 40px rgba(255, 0, 0, 0.2);
+    background: linear-gradient(135deg, #3C3C3C, #4A4A4A);
+    color: #fff;
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-secondary {
+    display: inline-block;
+    padding: 16px 40px;
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #FFD700;
+    background: linear-gradient(135deg, #8B0000, #FF0000);
+    border: 2px solid #FF0000;
+    border-radius: 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+    margin: 10px;
+    animation: pulseGlow 2s infinite ease-in-out;
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.3); }
+    50% { box-shadow: 0 0 25px rgba(255, 0, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.2); }
+  }
+
+  .btn-secondary:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.6), 0 0 50px rgba(255, 69, 0, 0.3);
+    background: linear-gradient(135deg, #FF0000, #FF4500);
+    color: #fff;
+    animation: none;
+  }
+
+  /* Status & Info Display */
+  .info-panel {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 10px;
+    padding: 20px 25px;
+    margin-top: 25px;
+    text-align: left;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.3);
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 0, 0, 0.2);
+  }
+
+  .info-row:last-child {
+    border-bottom: none;
+  }
+
+  .info-label {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.9rem;
+    color: #888;
+  }
+
+  .info-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.95rem;
+    color: #FFD700;
+  }
+
+  .info-value.connected {
+    color: #00ff88;
+  }
+
+  .info-value.disconnected {
+    color: #ff4444;
+  }
+
+  /* Status Messages */
+  #status {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.95rem;
+    color: #FFD700;
+    margin-top: 15px;
+    padding: 15px;
+    background: rgba(255, 0, 0, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 0, 0, 0.3);
+    display: none;
+  }
+
+  #userInfo, #balance, #ownedSets {
+    display: none;
+  }
+
+  /* Auth Panel - Matching homepage style */
+  .auth-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 32px;
+    border: 50px solid transparent;
+    border-image: url('/assets/button2.png') 300 round;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(26, 26, 26, 0.95), rgba(43, 43, 43, 0.4));
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.15), inset 0 0 6px rgba(255, 0, 0, 0.1);
+    z-index: 2000;
+    font-family: 'Cinzel', serif;
+    color: #FFD700;
+    text-shadow: 0 0 10px #FF0000, 0 0 20px #FF4500;
+    min-width: 300px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+  }
+
+  .auth-panel h2 {
+    font-family: 'Cinzel', serif;
+    color: #FFD700;
+    margin-bottom: 25px;
+    text-shadow: 0 0 10px #FF0000, 0 0 20px #FF4500;
+    font-size: 1.2rem;
+    text-align: center;
+  }
+
+  .auth-panel input {
+    width: 100%;
+    padding: 12px 14px;
+    margin: 8px 0;
+    font-size: 14px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 6px;
+    color: #fff;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .auth-panel input:focus {
+    border-color: #FFD700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.2), inset 0 2px 5px rgba(0, 0, 0, 0.3);
+    outline: none;
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  .auth-panel input::placeholder {
+    color: #777;
+  }
+
+  .auth-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 14px;
+  }
+
+  .auth-buttons button {
+    flex: 1;
+    margin: 0 5px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #2B2B2B, #3C3C3C);
+    border: 2px solid #FF0000;
+    text-shadow: 0 0 5px #FF0000;
+    color: #FFD700;
+    font-weight: bold;
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 6px;
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 0, 0, 0.2);
+  }
+
+  .auth-buttons button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.6), 0 0 30px rgba(255, 69, 0, 0.3);
+    background: linear-gradient(135deg, #FF4500, #FF0000);
+    color: #fff;
+  }
+
+  .auth-note {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: 15px;
+    text-align: center;
+    line-height: 1.4;
+    text-shadow: none;
+  }
+
+  /* Loading Spinner */
+  #loadingSpinner {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 3000;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .spinner-circle {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 0, 0, 0.2);
+    border-top-color: #FF0000;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .store-content {
+      grid-template-columns: 1fr;
+    }
+
+    .store-title {
+      font-size: 2rem;
+    }
+
+    .cards-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .cards-row-bottom .preview-card {
+      width: 80px;
+    }
+
+    .purchase-steps {
+      gap: 15px;
+    }
+
+    .step-arrow {
+      display: none;
+    }
+
+    .pack-showcase, .card-preview-section, .purchase-section {
+      border-width: 30px;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .store-container {
+      padding: 80px 15px 40px;
+    }
+
+    .store-title {
+      font-size: 1.6rem;
+      letter-spacing: 2px;
+    }
+
+    .pack-showcase, .card-preview-section, .purchase-section {
+      padding: 20px;
+      border-width: 25px;
+      border-image: url('/assets/button2.png') 75 round;
+    }
+
+    .pack-title {
+      font-size: 1.5rem;
+    }
+
+    .pack-image {
+      width: 140px;
+    }
+
+    .btn-primary, .btn-secondary {
+      padding: 14px 30px;
+      font-size: 0.95rem;
+      width: 100%;
+      max-width: 280px;
+    }
+
+    .detail-item {
+      padding: 8px 12px;
+    }
+
+    .cards-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .auth-panel {
+      padding: 20px;
+      min-width: 200px;
+      max-width: 90%;
+      border-width: 25px;
+      border-image: url('/assets/button2.png') 75 round;
+    }
+
+    .auth-panel h2 {
+      font-size: 1rem;
+    }
+
+    .auth-buttons {
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .auth-buttons button {
+      margin: 5px 0;
+    }
+
+    .info-panel {
+      max-width: 100%;
+      padding: 15px 20px;
+    }
+  }
 </style>
 </head>
 
 <body>
 
-    <!-- <video class="video-bg" autoplay loop muted playsinline preload="auto">
-        <source src="/assets/MASQ1.webm" type="video/webm">
-        Your browser does not support the video tag.
-    </video> -->
-    <img class="video-bg" src="/assets/bg_86.png" alt="" />
+<img class="store-bg" src="/assets/bgbg2.png" alt="" />
+<div class="store-overlay"></div>
 
-  <div id="loadingSpinner">
+<div id="loadingSpinner">
   <div class="spinner-circle"></div>
 </div>
 
-  
 <div class="header" id="header">
   <a href="/">
     <img src="/assets/logomasq1-g11o.gif" alt="Logo" class="logo">
@@ -309,88 +764,218 @@
   </div>
 </div>
 
-<main>
-  <br>
-  <br>
-  <br>
+<main class="store-container">
+  <!-- Store Header -->
+  <div class="store-header">
+    <h1 class="store-title">Card Store</h1>
+    <p class="store-subtitle">Expand your collection with exclusive card packs</p>
+  </div>
 
-    <div id="interactionContainer">
-    <div id="leftColumn">
-      <div id="buy-widget">
-        <h1>OG Golden Set <br> [Set of 5 unique gold cards]</h1>
-        <img src="/assets/golden-icon1.gif" alt="Card Pack" id="buy-widget-image" />
+  <!-- Main Content -->
+  <div class="store-content">
+    <!-- Pack Showcase -->
+    <div class="pack-showcase">
+      <div class="pack-content">
+        <span class="pack-badge">Limited Edition</span>
+        <h2 class="pack-title">OG Golden Set</h2>
+        <p class="pack-description">
+          Unlock 5 exclusive golden cards with unique abilities and stunning artwork.
+          These rare cards are only available through $MASQ token purchase.
+        </p>
+
+        <div class="pack-image-container">
+          <img src="/assets/golden-icon1.gif" alt="Golden Card Pack" class="pack-image" />
+        </div>
+
+        <div class="pack-details">
+          <div class="detail-item">
+            <span class="detail-icon">&#9733;</span>
+            <span class="detail-text">5 Unique Cards</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-icon">&#9830;</span>
+            <span class="detail-text">Golden Rarity</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-icon">&#9889;</span>
+            <span class="detail-text">Special Abilities</span>
+          </div>
+        </div>
+
+        <div class="pack-price">
+          <span class="price-label">Price:</span>
+          <span class="price-value">1,000,000</span>
+          <span class="price-token">$MASQ</span>
+        </div>
       </div>
-      <button id="connectWalletBtn" style="display: none;">Connect Phantom</button>
-      <button id="buyPackBtn" style="display: none;">Buy Pack (1M $MASQ)</button>
     </div>
 
-      <div id="rightColumn">
+    <!-- Card Preview -->
+    <div class="card-preview-section">
+      <h3 class="preview-title">Cards Included</h3>
+      <div class="cards-grid">
+        <div class="preview-card">
+          <img src="/cards/g1.webp" alt="Golden Card 1" />
+        </div>
+        <div class="preview-card">
+          <img src="/cards/g2.webp" alt="Golden Card 2" />
+        </div>
+        <div class="preview-card">
+          <img src="/cards/g3.webp" alt="Golden Card 3" />
+        </div>
+      </div>
+      <div class="cards-row-bottom">
+        <div class="preview-card">
+          <img src="/cards/g4.webp" alt="Golden Card 4" />
+        </div>
+        <div class="preview-card">
+          <img src="/cards/g5.webp" alt="Golden Card 5" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Purchase Section -->
+    <div class="purchase-section">
+      <h3 class="purchase-title">How to Purchase</h3>
+
+      <div class="purchase-steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <p class="step-text">Login to your account</p>
+        </div>
+        <span class="step-arrow">&#8594;</span>
+        <div class="step">
+          <div class="step-number">2</div>
+          <p class="step-text">Connect Phantom Wallet</p>
+        </div>
+        <span class="step-arrow">&#8594;</span>
+        <div class="step">
+          <div class="step-number">3</div>
+          <p class="step-text">Confirm transaction</p>
+        </div>
+        <span class="step-arrow">&#8594;</span>
+        <div class="step">
+          <div class="step-number">4</div>
+          <p class="step-text">Cards added to deck!</p>
+        </div>
+      </div>
+
+      <div>
+        <button id="connectWalletBtn" class="btn-primary" style="display: none;">Connect Phantom Wallet</button>
+        <button id="buyPackBtn" class="btn-secondary" style="display: none;">Purchase Golden Set</button>
+      </div>
+
       <p id="status"></p>
-      <div id="userInfo"></div>  
-      <p id="balance"></p>
-      <p id="ownedSets"></p>
+
+      <div class="info-panel" id="infoPanel" style="display: none;">
+        <div class="info-row">
+          <span class="info-label">Wallet Status</span>
+          <span class="info-value" id="walletStatus">Not Connected</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">$MASQ Balance</span>
+          <span class="info-value" id="balanceDisplay">-</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Owned Sets</span>
+          <span class="info-value" id="ownedSetsDisplay">Core Set</span>
+        </div>
+      </div>
+
+      <!-- Hidden elements for buy.js compatibility -->
+      <div id="userInfo" style="display:none;"></div>
+      <p id="balance" style="display:none;"></p>
+      <p id="ownedSets" style="display:none;"></p>
     </div>
   </div>
 </main>
 
+<!-- Auth Panel -->
 <div class="auth-panel" id="authPanel">
-  <h2>Login / Signup to Continue</h2>
-  <input type="email" id="email" placeholder="Email"/>
-  <input type="password" id="password" placeholder="Password"/>
+  <h2>Signup / Login to Access Store</h2>
+  <input type="text" id="username" placeholder="Username" autocomplete="off" />
+  <input type="password" id="password" placeholder="Password" />
   <div class="auth-buttons">
     <button onclick="handleSignup()">Sign Up</button>
     <button onclick="handleLogin()">Login</button>
   </div>
-  <p style="font-size: 0.8rem; color: #aaa; margin-top: 0.5rem;">* * Email confirmation not required. Treat like username in email format</p>
+  <p class="auth-note">Use the same credentials as the game login.</p>
 </div>
 
 <script type="module">
 import { signUp, login, getUser, playAsGuest } from './auth.js';
-  
+
 function showLoadingSpinner(show = true) {
   const spinner = document.getElementById('loadingSpinner');
-  spinner.style.display = show ? 'block' : 'none';
+  spinner.style.display = show ? 'flex' : 'none';
 }
 
 async function handleSignup() {
   showLoadingSpinner(true);
-  const email = document.getElementById("email").value;
+  const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value;
   try {
-    const result = await signUp(email, password);
+    const result = await signUp(username, password);
     if (result?.error) {
       alert("Signup failed: " + result.error.message);
+      showLoadingSpinner(false);
       return;
     }
-    alert("Signup successful. Please login now.");
+    alert("Signup successful! Please login now.");
     showLoadingSpinner(false);
   } catch (err) {
     alert("Signup error: " + err.message);
+    showLoadingSpinner(false);
   }
 }
 
 async function handleLogin() {
   showLoadingSpinner(true);
-  const email = document.getElementById("email").value;
+  const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value;
   try {
-    const result = await login(email, password);
+    const result = await login(username, password);
     if (result?.error || !result?.user) {
       alert("Login failed: " + (result?.error?.message || "Invalid credentials."));
+      showLoadingSpinner(false);
       return;
     }
     document.getElementById("authPanel").style.display = "none";
-    document.getElementById("connectWalletBtn").style.display = "block";
+    document.getElementById("connectWalletBtn").style.display = "inline-block";
+    document.getElementById("infoPanel").style.display = "block";
     showLoadingSpinner(false);
-    alert("Login successful! Connect your Phantom wallet next.");
+    alert("Login successful! Connect your Phantom wallet to continue.");
   } catch (err) {
     alert("Login error: " + err.message);
+    showLoadingSpinner(false);
   }
 }
 
-
 window.handleSignup = handleSignup;
 window.handleLogin = handleLogin;
+
+// Update info panel when wallet connects (called from buy.js)
+window.updateStoreInfoPanel = function(walletConnected, balance, ownedSets) {
+  const walletStatus = document.getElementById('walletStatus');
+  const balanceDisplay = document.getElementById('balanceDisplay');
+  const ownedSetsDisplay = document.getElementById('ownedSetsDisplay');
+
+  if (walletConnected) {
+    walletStatus.textContent = 'Connected';
+    walletStatus.className = 'info-value connected';
+  } else {
+    walletStatus.textContent = 'Not Connected';
+    walletStatus.className = 'info-value disconnected';
+  }
+
+  if (balance !== undefined) {
+    balanceDisplay.textContent = balance.toLocaleString() + ' $MASQ';
+  }
+
+  if (ownedSets) {
+    ownedSetsDisplay.textContent = ownedSets;
+  }
+};
 </script>
 
 </body>

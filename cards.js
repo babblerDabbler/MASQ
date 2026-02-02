@@ -179,6 +179,7 @@ export class Card {
 
   const mesh = new THREE.Mesh(geometry, material);
   mesh.userData = this;
+  mesh.visible = false; // Hide until drawn into hand
   scene.add(mesh);
   return mesh;
 }
