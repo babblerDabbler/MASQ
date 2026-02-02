@@ -119,6 +119,19 @@ export const memeToken = {
   lore: "Short-lived. Meme-ified. Market fodder."
 };
 
+// --- Texture Cache ---
+const textureCache = new Map();
+const textureLoader = new THREE.TextureLoader();
+
+function getCachedTexture(url) {
+  if (textureCache.has(url)) {
+    return textureCache.get(url);
+  }
+  const texture = textureLoader.load(url);
+  textureCache.set(url, texture);
+  return texture;
+}
+
 // --- Shader Code (inline for browser compatibility) ---
 const vertexShader = `
     varying vec2 vUv;
@@ -165,7 +178,8 @@ export class Card {
   const height = isMobile ? 1.8 : 3;
 
   const geometry = new THREE.PlaneGeometry(width, height);
-  const texture = new THREE.TextureLoader().load(this.data.texture);
+  // Use cached texture
+  const texture = getCachedTexture(this.data.texture);
 
   const material = new THREE.ShaderMaterial({
     uniforms: {
@@ -186,7 +200,8 @@ export class Card {
 
   reveal() {
     if (!this.isPlayer) {
-      const texture = new THREE.TextureLoader().load(this.data.texture);
+      // Use cached texture for reveal
+      const texture = getCachedTexture(this.data.texture);
       this.mesh.material.uniforms.cardTexture.value = texture;
       this.mesh.material.needsUpdate = true;
     }
