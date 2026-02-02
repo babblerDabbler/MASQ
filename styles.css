@@ -1046,18 +1046,83 @@ button:hover {
 
 .health-fill {
   height: 100%;
-  background: linear-gradient(to right, #8B4513, #D4AF37);
-  transition: width 0.5s ease-in-out;
+  background: linear-gradient(90deg, #2ecc71, #27ae60);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
   border-radius: 5px 0 0 5px;
-  box-shadow: 0 0 8px rgba(139, 69, 19, 0.4);
+  box-shadow: 0 0 8px rgba(46, 204, 113, 0.4);
+  position: relative;
+}
+
+.health-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.2), transparent);
+  border-radius: 5px 0 0 0;
+}
+
+.health-fill.warning {
+  background: linear-gradient(90deg, #f1c40f, #f39c12);
+  box-shadow: 0 0 8px rgba(241, 196, 15, 0.6);
+  animation: healthPulseWarning 1s ease-in-out infinite;
+}
+
+.health-fill.critical {
+  background: linear-gradient(90deg, #e74c3c, #c0392b);
+  box-shadow: 0 0 12px rgba(231, 76, 60, 0.8);
+  animation: healthPulseCritical 0.5s ease-in-out infinite;
+}
+
+.health-fill.damage-flash {
+  animation: damageFlash 0.3s ease-out;
 }
 
 .mana-fill {
   height: 100%;
-  background: linear-gradient(to right, #00bbff, #003cff);
-  transition: width 0.5s ease-in-out;
+  background: linear-gradient(90deg, #3498db, #2980b9);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 5px 0 0 5px;
-  box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+  box-shadow: 0 0 8px rgba(52, 152, 219, 0.5);
+  position: relative;
+}
+
+.mana-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.2), transparent);
+  border-radius: 5px 0 0 0;
+}
+
+.mana-fill.spending {
+  animation: manaSpend 0.3s ease-out;
+}
+
+@keyframes healthPulseWarning {
+  0%, 100% { box-shadow: 0 0 8px rgba(241, 196, 15, 0.6); }
+  50% { box-shadow: 0 0 15px rgba(241, 196, 15, 1); }
+}
+
+@keyframes healthPulseCritical {
+  0%, 100% { box-shadow: 0 0 8px rgba(231, 76, 60, 0.8); }
+  50% { box-shadow: 0 0 20px rgba(231, 76, 60, 1); }
+}
+
+@keyframes damageFlash {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(2) saturate(1.5); }
+}
+
+@keyframes manaSpend {
+  0% { transform: scaleX(1); filter: brightness(1); }
+  50% { transform: scaleX(0.95); filter: brightness(1.5); }
+  100% { transform: scaleX(1); filter: brightness(1); }
 }
 
 
@@ -1132,19 +1197,32 @@ button:hover {
 
 .card-tooltip, .lore-tooltip {
   position: absolute;
-  background: linear-gradient(135deg, rgba(26, 26, 26, 0.9), rgba(43, 43, 43, 0.85));
-  border: 1px solid #FF0000;
-  border-radius: 8px;
-  padding: 14px;
+  background: linear-gradient(135deg, rgba(26, 26, 26, 0.95), rgba(43, 43, 43, 0.9));
+  border: 2px solid #FF0000;
+  border-radius: 10px;
+  padding: 16px;
   color: #FFD700;
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Orbitron', sans-serif;
   font-size: 13px;
   pointer-events: none;
   z-index: 20;
   display: none;
   max-width: 420px;
   white-space: pre-wrap;
-  box-shadow: 0 0 15px rgba(255, 0, 0, 0.2);
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.3), 0 4px 15px rgba(0, 0, 0, 0.5);
+  animation: tooltipFadeIn 0.2s ease-out;
+  backdrop-filter: blur(5px);
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .how-to-play-tooltip {
@@ -1178,13 +1256,37 @@ button:hover {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-family: 'Cinzel', serif;
+  font-family: 'Orbitron', sans-serif;
   font-size: 64px;
   color: #FFFFFF;
   text-shadow: 0 0 12px #FF0000, 0 0 20px #FF4500;
   pointer-events: none;
   animation: timerPulse 1.5s infinite ease-in-out;
-  display: none; /* Initially hidden */
+  display: none;
+  transition: color 0.3s ease, text-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.timer.warning {
+  color: #f39c12;
+  text-shadow: 0 0 15px #f39c12, 0 0 30px #e67e22;
+  animation: timerPulseWarning 0.8s infinite ease-in-out;
+}
+
+.timer.critical {
+  color: #e74c3c;
+  text-shadow: 0 0 20px #e74c3c, 0 0 40px #c0392b;
+  animation: timerPulseCritical 0.4s infinite ease-in-out;
+  font-size: 72px;
+}
+
+@keyframes timerPulseWarning {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.05); }
+}
+
+@keyframes timerPulseCritical {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
 }
 
 
@@ -1217,43 +1319,66 @@ button:hover {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: linear-gradient(145deg, rgba(26, 26, 26, 0.9), rgba(43, 43, 43, 0.85));
-  padding: 40px;
-  border: 1px solid #FF0000;
-  border-radius: 12px;
-  box-shadow: 0 0 40px rgba(255, 0, 0, 0.2), inset 0 0 8px rgba(255, 0, 0, 0.05);
+  background: linear-gradient(145deg, rgba(26, 26, 26, 0.95), rgba(43, 43, 43, 0.9));
+  padding: 40px 60px;
+  border: 2px solid #FF0000;
+  border-radius: 16px;
+  box-shadow: 0 0 60px rgba(255, 0, 0, 0.3), inset 0 0 20px rgba(255, 0, 0, 0.1);
   z-index: 100;
   color: #FFD700;
-  font-family: 'Cinzel', serif;
+  font-family: 'Orbitron', sans-serif;
   text-align: center;
+  animation: gameOverSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes gameOverSlideIn {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8) rotateX(20deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotateX(0deg);
+  }
 }
 
 .game-over-screen h2 {
   margin: 0 0 18px;
-  font-size: 30px;
-  text-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
+  font-size: 36px;
+  text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+  animation: titleGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes titleGlow {
+  from { text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+  to { text-shadow: 0 0 25px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 69, 0, 0.4); }
 }
 
 .game-over-screen p {
   margin: 0 0 25px;
   font-size: 16px;
   font-family: 'Roboto', sans-serif;
+  color: #ccc;
 }
 
 .game-over-screen button {
-  margin: 0 8px;
-  padding: 10px 20px;
+  margin: 0 12px;
+  padding: 12px 28px;
   font-size: 14px;
   background: linear-gradient(90deg, #FF0000, #FF4500);
   color: #FFF;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .game-over-screen button:hover {
-  transform: scale(1.08);
-  box-shadow: 0 0 20px rgba(255, 0, 0, 0.5), 0 0 30px rgba(255, 69, 0, 0.3);
+  transform: scale(1.1) translateY(-2px);
+  box-shadow: 0 5px 25px rgba(255, 0, 0, 0.5), 0 0 40px rgba(255, 69, 0, 0.3);
   background: linear-gradient(90deg, #FF4500, #FF0000);
 }
 
