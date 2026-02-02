@@ -100,10 +100,14 @@ document.getElementById('connectWalletBtn').onclick = async () => {
 
       const setNames = ownedSets.map(setId => setId === 1 ? "Default Set" : setId === 2 ? "Golden Set" : `Set #${setId}`);
       document.getElementById('ownedSets').textContent = `Sets owned: ${setNames.join(', ') || 'None'}`;
-      document.getElementById('userInfo').innerHTML = `
-        <p><strong>Username:</strong> ${username}</p>
-        <p><strong>Linked Wallet:</strong> ${linkedWallet}</p>
-      `;
+      const userInfoEl = document.getElementById('userInfo');
+      userInfoEl.textContent = '';
+      const usernamePara = document.createElement('p');
+      usernamePara.textContent = `Username: ${username}`;
+      const walletPara = document.createElement('p');
+      walletPara.textContent = `Linked Wallet: ${linkedWallet}`;
+      userInfoEl.appendChild(usernamePara);
+      userInfoEl.appendChild(walletPara);
     } catch (err) {
       console.error("Error connecting to wallet:", err);
       alert('Failed to connect wallet.');
@@ -302,10 +306,14 @@ async function refreshStats() {
 
     const setNames = ownedSets.map(setId => setId === 1 ? "Default Set" : setId === 2 ? "Golden Set" : `Set #${setId}`);
     document.getElementById('ownedSets').textContent = `Sets owned: ${setNames.join(', ') || 'None'}`;
-    document.getElementById('userInfo').innerHTML = `
-      <p><strong>Username:</strong> ${username}</p>
-      <p><strong>Linked Wallet:</strong> ${linkedWallet}</p>
-    `;
+    const userInfoEl = document.getElementById('userInfo');
+    userInfoEl.textContent = '';
+    const usernamePara = document.createElement('p');
+    usernamePara.textContent = `Username: ${username}`;
+    const walletPara = document.createElement('p');
+    walletPara.textContent = `Linked Wallet: ${linkedWallet}`;
+    userInfoEl.appendChild(usernamePara);
+    userInfoEl.appendChild(walletPara);
   } catch (err) {
     console.error("Error refreshing stats:", err);
     alert('Failed to refresh stats.');
