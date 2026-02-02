@@ -31,6 +31,7 @@ import {
   animateCardFlip,
   screenShake,
   createDamageNumber,
+  createRoundSummary,
   ParticleSystem,
   createVictoryEffect,
   createDefeatEffect,
@@ -545,6 +546,12 @@ export function resolveTurn() {
   });
 
   setTimeout(async () => {
+    // Accumulators for round summary
+    let totalPlayerDamageDealt = 0;
+    let totalPlayerHealReceived = 0;
+    let totalOpponentDamageDealt = 0;
+    let totalOpponentHealReceived = 0;
+
     let playerLastCard = null;
     let lastPlayerAbility = null;
     gameState.player.queuedCards.forEach(card => {
@@ -719,23 +726,22 @@ export function resolveTurn() {
         }
       }
 
-      // Apply damage with effects (damage shown on left side)
+      // Apply damage (accumulate for round summary)
       if (attack > 0) {
         gameState.opponent.health -= attack;
-        // Damage effects
+        totalPlayerDamageDealt += attack;
         screenShake(camera, 0.15 + attack * 0.02, 200);
-        createDamageNumber(scene, new THREE.Vector3(-1.5, 3, 2), attack, false);
         if (gameState.particleSystem) {
-          gameState.particleSystem.createDamageParticles(new THREE.Vector3(-1.5, 3, 1), attack * 2);
+          gameState.particleSystem.createDamageParticles(new THREE.Vector3(0, 3, 1), attack * 2);
         }
       }
 
-      // Apply heal with effects (heal shown on right side)
+      // Apply heal (accumulate for round summary)
       if (health > 0) {
         gameState.player.health += health;
-        createDamageNumber(scene, new THREE.Vector3(1.5, -3, 2), health, true);
+        totalPlayerHealReceived += health;
         if (gameState.particleSystem) {
-          gameState.particleSystem.createHealParticles(new THREE.Vector3(1.5, -3, 1), health * 2);
+          gameState.particleSystem.createHealParticles(new THREE.Vector3(0, -3, 1), health * 2);
         }
       }
 
@@ -922,22 +928,22 @@ export function resolveTurn() {
         }
       }
 
-      // Apply damage to player with effects (damage shown on left side)
+      // Apply damage to player (accumulate for round summary)
       if (attack > 0) {
         gameState.player.health -= attack;
+        totalOpponentDamageDealt += attack;
         screenShake(camera, 0.2 + attack * 0.03, 250);
-        createDamageNumber(scene, new THREE.Vector3(-1.5, -3, 2), attack, false);
         if (gameState.particleSystem) {
-          gameState.particleSystem.createDamageParticles(new THREE.Vector3(-1.5, -3, 1), attack * 2);
+          gameState.particleSystem.createDamageParticles(new THREE.Vector3(0, -3, 1), attack * 2);
         }
       }
 
-      // Apply heal to opponent with effects (heal shown on right side)
+      // Apply heal to opponent (accumulate for round summary)
       if (health > 0) {
         gameState.opponent.health += health;
-        createDamageNumber(scene, new THREE.Vector3(1.5, 3, 2), health, true);
+        totalOpponentHealReceived += health;
         if (gameState.particleSystem) {
-          gameState.particleSystem.createHealParticles(new THREE.Vector3(1.5, 3, 1), health * 2);
+          gameState.particleSystem.createHealParticles(new THREE.Vector3(0, 3, 1), health * 2);
         }
       }
 
@@ -954,6 +960,15 @@ export function resolveTurn() {
 
     gameState.player.playedCards = gameState.player.playedCards.filter(c => c.data.name !== "Meme Token");
     gameState.opponent.playedCards = gameState.opponent.playedCards.filter(c => c.data.name !== "Meme Token");
+
+    // Show round summary with aggregated totals (damage and heal with spacing)
+    createRoundSummary(
+      scene,
+      totalPlayerDamageDealt,
+      totalPlayerHealReceived,
+      totalOpponentDamageDealt,
+      totalOpponentHealReceived
+    );
 
     updateBoard();
     log("Turn resolved, checking game over state");

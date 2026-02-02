@@ -251,30 +251,47 @@ export function animateCardHover(card, isHovering, isInHand = true) {
   const targetScale = isHovering ? (isInHand ? 2.0 : 0.6) : (isInHand ? 1.0 : 0.25);
   const targetZ = isHovering ? 3.0 : 0.5;
 
-  // Store original Y position if not stored
+  // Store original position if not stored
   if (isInHand && isHovering && card._originalY === undefined) {
     card._originalY = mesh.position.y;
+    card._originalX = mesh.position.x;
   }
 
-  animationManager.animateScale(mesh, targetScale, 200, Easing.easeOutBack);
+  // Use smooth easing without bounce (easeOutCubic instead of easeOutBack)
+  animationManager.animateScale(mesh, targetScale, 200, Easing.easeOutCubic);
 
-  // Raise card higher when hovering in hand to prevent bottom cutoff
-  const targetY = isInHand && isHovering ? (card._originalY || mesh.position.y) + 4.5 : (card._originalY || mesh.position.y);
+  // Calculate target position - move towards center when hovering in hand
+  let targetY = card._originalY || mesh.position.y;
+  let targetX = card._originalX || mesh.position.x;
 
+  if (isInHand && isHovering) {
+    // Raise card up and move towards center (reduce X distance from center by 50%)
+    targetY = (card._originalY || mesh.position.y) + 3.5;
+    targetX = (card._originalX || mesh.position.x) * 0.5;
+  }
+
+  // Smooth position animation without bouncing
   animationManager.animate({
     duration: 200,
     easing: Easing.easeOutCubic,
     onUpdate: (progress) => {
-      mesh.position.z = mesh.position.z + (targetZ - mesh.position.z) * progress * 0.3;
+      // Direct interpolation to target - no cumulative changes
+      const currentZ = mesh.position.z;
+      const currentY = mesh.position.y;
+      const currentX = mesh.position.x;
+
+      mesh.position.z = currentZ + (targetZ - currentZ) * 0.15;
       if (isInHand) {
-        mesh.position.y = mesh.position.y + (targetY - mesh.position.y) * progress * 0.3;
+        mesh.position.y = currentY + (targetY - currentY) * 0.15;
+        mesh.position.x = currentX + (targetX - currentX) * 0.15;
       }
     }
   });
 
-  // Reset original Y when not hovering
+  // Reset original position when not hovering
   if (!isHovering && card._originalY !== undefined) {
     delete card._originalY;
+    delete card._originalX;
   }
 }
 
@@ -347,6 +364,37 @@ export function screenShake(camera, intensity = 0.3, duration = 300) {
 // Damage number pool for reuse
 const damageNumberPool = [];
 const MAX_DAMAGE_NUMBERS = 10;
+
+// Create round summary showing total damage and heal with clear spacing
+export function createRoundSummary(scene, playerDamage, playerHeal, opponentDamage, opponentHeal) {
+  // Show opponent's damage dealt to player (top left)
+  if (opponentDamage > 0) {
+    setTimeout(() => {
+      createDamageNumber(scene, new THREE.Vector3(-3, -2, 2), opponentDamage, false);
+    }, 0);
+  }
+
+  // Show player's heal (top right, with gap)
+  if (playerHeal > 0) {
+    setTimeout(() => {
+      createDamageNumber(scene, new THREE.Vector3(3, -2, 2), playerHeal, true);
+    }, 300);
+  }
+
+  // Show player's damage dealt to opponent (bottom left)
+  if (playerDamage > 0) {
+    setTimeout(() => {
+      createDamageNumber(scene, new THREE.Vector3(-3, 2, 2), playerDamage, false);
+    }, 600);
+  }
+
+  // Show opponent's heal (bottom right, with gap)
+  if (opponentHeal > 0) {
+    setTimeout(() => {
+      createDamageNumber(scene, new THREE.Vector3(3, 2, 2), opponentHeal, true);
+    }, 900);
+  }
+}
 
 // Floating damage number
 export function createDamageNumber(scene, position, amount, isHeal = false) {
