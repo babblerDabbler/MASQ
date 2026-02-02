@@ -245,10 +245,11 @@ export async function animateCardPlay(card, targetPosition) {
 }
 
 // Card hover animation
-export function animateCardHover(card, isHovering) {
+export function animateCardHover(card, isHovering, isInHand = true) {
   const mesh = card.mesh;
-  const targetScale = isHovering ? 1.15 : 1.0;
-  const targetZ = isHovering ? 1.5 : 0.5;
+  // Larger zoom for cards in hand, smaller for played cards
+  const targetScale = isHovering ? (isInHand ? 2.0 : 0.35) : (isInHand ? 1.0 : 0.25);
+  const targetZ = isHovering ? 2.5 : 0.5;
 
   animationManager.animateScale(mesh, targetScale, 200, Easing.easeOutBack);
 

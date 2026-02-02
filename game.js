@@ -1176,10 +1176,13 @@ export function onMouseMove(event) {
       hovered = true;
       hoveredCard = card;
 
+      // Check if card is in hand vs played
+      const isInHand = gameState.player.hand.includes(card);
+
       // Track hover state to prevent repeated animations
       if (!card._isHovered) {
         card._isHovered = true;
-        animateCardHover(card, true);
+        animateCardHover(card, true, isInHand);
       }
 
       const currentTexture = card.mesh.material.uniforms.cardTexture.value;
@@ -1209,7 +1212,8 @@ export function onMouseMove(event) {
   [...gameState.player.hand, ...gameState.player.playedCards.slice(-5), ...gameState.opponent.playedCards.slice(-5)].forEach(card => {
     if (card._isHovered && card !== hoveredCard) {
       card._isHovered = false;
-      animateCardHover(card, false);
+      const isInHand = gameState.player.hand.includes(card);
+      animateCardHover(card, false, isInHand);
     }
   });
 
