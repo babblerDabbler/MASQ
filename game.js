@@ -277,6 +277,7 @@ export function drawCards(player, count) {
       continue;
     }
     const card = player.deck.shift();
+    card.mesh.visible = true; // Show card when drawn into hand
     player.hand.push(card);
     log(`${player === gameState.player ? 'You drew ' + card.data.name : 'Opponent drew a card'}`);
     if (player === gameState.player) gameState.player.drawCount += 1;
@@ -502,6 +503,7 @@ export function resolveTurn() {
         if (card.data.name === "Reorg Trickster" && gameState.opponent.playedCards.length > 0) {
           const lastOpponentCard = gameState.opponent.playedCards[gameState.opponent.playedCards.length - 1];
           const copiedCard = new Card(lastOpponentCard.data, true);
+          copiedCard.mesh.visible = true;
           gameState.player.queuedCards.push(copiedCard);
           log(`Reorg Trickster copies and plays ${lastOpponentCard.data.name} for 0 mana!`);
         }
@@ -540,12 +542,17 @@ export function resolveTurn() {
         if (card.data.name === "Mnemonic Curator" && gameState.player.playedCards.length > 0) {
           const randomCard = gameState.player.playedCards[Math.floor(Math.random() * gameState.player.playedCards.length)];
           const newCard = new Card(randomCard.data, true);
+          newCard.mesh.visible = true;
           gameState.player.hand.push(newCard);
           log(`Mnemonic Curator recalls ${randomCard.data.name} to your hand!`);
         }
         if (card.data.name === "Darkpool Revenant" && gameState.opponent.hand.length > 0) {
           const stolenCard = gameState.opponent.hand.splice(Math.floor(Math.random() * gameState.opponent.hand.length), 1)[0];
-          gameState.player.hand.push(new Card(stolenCard.data, true));
+          stolenCard.mesh.visible = false; // Hide the old card mesh
+          scene.remove(stolenCard.mesh); // Remove from scene
+          const newStolenCard = new Card(stolenCard.data, true);
+          newStolenCard.mesh.visible = true;
+          gameState.player.hand.push(newStolenCard);
           log(`Darkpool Revenant steals ${stolenCard.data.name} from opponent's hand!`);
         }
         if (card.data.name === "Streak Catalyst") {
@@ -596,6 +603,7 @@ export function resolveTurn() {
         if (card.data.name === "Pump.fun Meme Forge") {
           for (let i = 0; i < 2; i++) {
             const memeCard = new Card({ ...memeToken }, true);
+            memeCard.mesh.visible = true;
             gameState.player.queuedCards.push(memeCard);
             log("Pump.fun Meme Forge spawns a Meme Token!");
           }
@@ -684,6 +692,7 @@ export function resolveTurn() {
         if (card.data.name === "Reorg Trickster" && gameState.player.playedCards.length > 0) {
           const lastPlayerCard = gameState.player.playedCards[gameState.player.playedCards.length - 1];
           const copiedCard = new Card(lastPlayerCard.data, false);
+          copiedCard.mesh.visible = true;
           gameState.opponent.queuedCards.push(copiedCard);
           log(`Opponent Reorg Trickster copies and plays ${lastPlayerCard.data.name} for 0 mana!`);
         }
@@ -716,13 +725,18 @@ export function resolveTurn() {
         if (card.data.name === "Mnemonic Curator" && gameState.opponent.playedCards.length > 0) {
           const randomCard = gameState.opponent.playedCards[Math.floor(Math.random() * gameState.opponent.playedCards.length)];
           const newCard = new Card(randomCard.data, false);
+          newCard.mesh.visible = true;
           gameState.opponent.hand.push(newCard);
-          log(`Opponent’s Mnemonic Curator recalls ${randomCard.data.name} to their hand!`);
+          log(`Opponent's Mnemonic Curator recalls ${randomCard.data.name} to their hand!`);
         }
         if (card.data.name === "Darkpool Revenant" && gameState.player.hand.length > 0) {
           const stolenCard = gameState.player.hand.splice(Math.floor(Math.random() * gameState.player.hand.length), 1)[0];
-          gameState.opponent.hand.push(new Card(stolenCard.data, false));
-          log(`Opponent’s Darkpool Revenant steals ${stolenCard.data.name} from your hand!`);
+          stolenCard.mesh.visible = false; // Hide the old card mesh
+          scene.remove(stolenCard.mesh); // Remove from scene
+          const newStolenCard = new Card(stolenCard.data, false);
+          newStolenCard.mesh.visible = true;
+          gameState.opponent.hand.push(newStolenCard);
+          log(`Opponent's Darkpool Revenant steals ${stolenCard.data.name} from your hand!`);
         }
         if (card.data.name === "Streak Catalyst") {
           attack += gameState.player.winStreak;
@@ -772,8 +786,9 @@ export function resolveTurn() {
         if (card.data.name === "Pump.fun Meme Forge") {
           for (let i = 0; i < 2; i++) {
             const memeCard = new Card({ ...memeToken }, false);
+            memeCard.mesh.visible = true;
             gameState.opponent.queuedCards.push(memeCard);
-            log("Opponent’s Pump.fun Meme Forge spawns a Meme Token!");
+            log("Opponent's Pump.fun Meme Forge spawns a Meme Token!");
           }
         }
       }
