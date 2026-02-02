@@ -1,6 +1,5 @@
 // animations.js - Comprehensive animation system for MASQ
-
-import * as THREE from 'three';
+// THREE is loaded globally via CDN
 
 // ============================================================================
 // EASING FUNCTIONS

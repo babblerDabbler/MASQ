@@ -17,7 +17,7 @@ export const GAME_CONFIG = {
   PLAYED_CARDS_DISPLAY_LIMIT: 5
 };
 
-import * as THREE from 'three';
+// THREE is loaded globally via CDN
 import { Card, cardSets } from './cards.js';
 import { shuffle } from './utils.js';
 import { toast } from './toast.js';
