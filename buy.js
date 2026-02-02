@@ -5,6 +5,7 @@ import {
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID
 } from "https://esm.sh/@solana/spl-token@0.3.5";
+import { toast } from './toast.js';
 
 const masqMintAddress = '8rup3TJ1mTw3NHui77BFfoG4WoD1PXaijxnFqzh2pump';
 const treasuryPublicKey = new solanaWeb3.PublicKey('2Lpgue8SddVbeuiit25Eb9B76V1TNTDmdGnDCMVMBBq6');
@@ -31,7 +32,7 @@ async function getHeliusUrl() {
     heliusUrl = `https://mainnet.helius-rpc.com/?api-key=${heliusKey}`;
   } catch (err) {
     console.error("Error fetching Helius key:", err);
-    alert("Could not initialize wallet connection. Please try again later.");
+    toast.error("Could not initialize wallet connection. Please try again later.");
   } finally {
     showLoadingSpinner(false);
   }
@@ -110,12 +111,12 @@ document.getElementById('connectWalletBtn').onclick = async () => {
       userInfoEl.appendChild(walletPara);
     } catch (err) {
       console.error("Error connecting to wallet:", err);
-      alert('Failed to connect wallet.');
+      toast.error('Failed to connect wallet.');
     } finally {
       showLoadingSpinner(false);
     }
   } else {
-    alert('Phantom wallet not found. Please install it.');
+    toast.warning('Phantom wallet not found. Please install it.');
   }
 };
 
@@ -123,7 +124,7 @@ document.getElementById('buyPackBtn').onclick = async () => {
   showLoadingSpinner(true);
 
   if (!provider || !userPublicKey) {
-    alert('Please connect your wallet first!');
+    toast.warning('Please connect your wallet first!');
     showLoadingSpinner(false);
     return;
   }
@@ -133,7 +134,7 @@ document.getElementById('buyPackBtn').onclick = async () => {
   const { data: user, error: userError } = await supabase.auth.getUser();
   if (userError || !user?.user) {
     console.warn('User not authenticated:', userError);
-    alert('User not authenticated.');
+    toast.error('User not authenticated.');
     showLoadingSpinner(false);
     return;
   }
@@ -147,7 +148,7 @@ document.getElementById('buyPackBtn').onclick = async () => {
 
   if (profileError) {
     console.error('Failed to fetch user profile:', profileError);
-    alert('Failed to fetch user data.');
+    toast.error('Failed to fetch user data.');
     showLoadingSpinner(false);
     return;
   }
@@ -157,7 +158,7 @@ document.getElementById('buyPackBtn').onclick = async () => {
   const connectedWallet = userPublicKey.toBase58();
 
   if (walletInDB && walletInDB !== connectedWallet) {
-    alert('This wallet does not match your linked wallet. Contact support.');
+    toast.error('This wallet does not match your linked wallet. Contact support.');
     showLoadingSpinner(false);
     return;
   }
@@ -222,7 +223,7 @@ document.getElementById('buyPackBtn').onclick = async () => {
 
     if (fetchAfterTxError) {
       console.error('Error re-fetching profile:', fetchAfterTxError);
-      alert('Purchase done, but failed to fetch updated profile.');
+      toast.warning('Purchase done, but failed to fetch updated profile.');
       showLoadingSpinner(false);
       return;
     }
@@ -240,7 +241,7 @@ document.getElementById('buyPackBtn').onclick = async () => {
 
     if (updateError) {
       console.error('Failed to update owned_sets:', updateError);
-      alert('Transaction succeeded, but failed to update owned sets.');
+      toast.warning('Transaction succeeded, but failed to update owned sets.');
     } else {
       console.log('Successfully updated owned_sets in DB!');
       // alert(`Pack purchased and sets updated! Tx: ${signature}`);
@@ -257,18 +258,18 @@ document.getElementById('buyPackBtn').onclick = async () => {
   
       if (updateWalletError) {
         console.error('Failed to update wallet field:', updateWalletError);
-        alert('Sets updated, but failed to update wallet address. Check if wallet is already linked with another account.');
+        toast.warning('Sets updated, but failed to update wallet address. Check if wallet is already linked with another account.');
       } else {
         console.log('Successfully updated wallet field in DB!');
       }
     }
-  
-    alert(`Pack purchased and sets updated! Tx: ${signature}`);
+
+    toast.success(`Pack purchased and sets updated! Tx: ${signature.slice(0, 20)}...`);
         
     }
   } catch (err) {
     console.error('Transaction error:', err);
-    alert(`Transaction failed: ${err.message || 'Check console for logs.'}`);
+    toast.error(`Transaction failed: ${err.message || 'Check console for logs.'}`);
   } finally {
     showLoadingSpinner(false);
   }
@@ -316,7 +317,7 @@ async function refreshStats() {
     userInfoEl.appendChild(walletPara);
   } catch (err) {
     console.error("Error refreshing stats:", err);
-    alert('Failed to refresh stats.');
+    toast.error('Failed to refresh stats.');
   } finally {
     showLoadingSpinner(false);
   }

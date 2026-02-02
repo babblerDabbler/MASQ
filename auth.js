@@ -1,13 +1,58 @@
 // auth.js
 
 import { supabase } from './supabaseClient.js';
+import { toast } from './toast.js';
+
+// Input validation functions
+export function validateUsername(username) {
+  if (!username || typeof username !== 'string') {
+    return { valid: false, error: 'Username is required' };
+  }
+  const trimmed = username.trim();
+  if (trimmed.length < 3) {
+    return { valid: false, error: 'Username must be at least 3 characters' };
+  }
+  if (trimmed.length > 20) {
+    return { valid: false, error: 'Username must be 20 characters or less' };
+  }
+  // Only allow alphanumeric characters and underscores
+  if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) {
+    return { valid: false, error: 'Username can only contain letters, numbers, and underscores' };
+  }
+  return { valid: true, error: null };
+}
+
+export function validatePassword(password) {
+  if (!password || typeof password !== 'string') {
+    return { valid: false, error: 'Password is required' };
+  }
+  if (password.length < 6) {
+    return { valid: false, error: 'Password must be at least 6 characters' };
+  }
+  if (password.length > 100) {
+    return { valid: false, error: 'Password must be 100 characters or less' };
+  }
+  return { valid: true, error: null };
+}
 
 function usernameToEmail(username) {
   return `${username.toLowerCase()}@masq.com`;
 }
 
 export async function signUp(username, password) {
-  const email = usernameToEmail(username);
+  // Validate inputs
+  const usernameValidation = validateUsername(username);
+  if (!usernameValidation.valid) {
+    toast.error(usernameValidation.error);
+    return;
+  }
+  const passwordValidation = validatePassword(password);
+  if (!passwordValidation.valid) {
+    toast.error(passwordValidation.error);
+    return;
+  }
+
+  const email = usernameToEmail(username.trim());
   const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email,
     password,
@@ -15,9 +60,9 @@ export async function signUp(username, password) {
 
   if (signUpError) {
     if (signUpError.message.includes("User already registered")) {
-      alert("This email is already signed up. Try logging in instead.");
+      toast.warning("This username is already signed up. Try logging in instead.");
     } else {
-      alert(`Signup Error: ${signUpError.message}`);
+      toast.error(`Signup Error: ${signUpError.message}`);
     }
     console.error(signUpError);
     return;
@@ -25,12 +70,22 @@ export async function signUp(username, password) {
 
   const user = signUpData.user;
   if (user) {
-    alert("Signup successful! Just click on LOGIN now. GLHF anon!");
+    toast.success("Signup successful! Just click on LOGIN now. GLHF anon!");
   }
 }
 
 export async function login(username, password) {
-  const email = usernameToEmail(username);
+  // Validate inputs
+  const usernameValidation = validateUsername(username);
+  if (!usernameValidation.valid) {
+    return { user: null, username: null, error: { message: usernameValidation.error } };
+  }
+  const passwordValidation = validatePassword(password);
+  if (!passwordValidation.valid) {
+    return { user: null, username: null, error: { message: passwordValidation.error } };
+  }
+
+  const email = usernameToEmail(username.trim());
   const { data: loginData, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -44,7 +99,7 @@ export async function login(username, password) {
   const user = loginData?.user || null;
 
   if (user) {
-    await ensureUserInDB(user.id, username);
+    await ensureUserInDB(user.id, username.trim());
     // Fetch the username from the users table
     const { data: userData, error: fetchError } = await supabase
       .from('users')
@@ -64,12 +119,17 @@ export async function login(username, password) {
 }
 
 export async function playAsGuest() {
+  // Use crypto for secure random ID generation
+  const randomBytes = new Uint8Array(12);
+  crypto.getRandomValues(randomBytes);
+  const secureId = Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+
   const guestUser = {
-    id: 'guest_' + Math.random().toString(36).substr(2, 9), // Unique guest ID
+    id: 'guest_' + secureId,
     email: 'guest@example.com',
   };
   console.log("Guest mode activated with ID:", guestUser.id);
-  return { user: guestUser, username: 'Anon', error: null }; // Return "Anon" as username for guests
+  return { user: guestUser, username: 'Anon', error: null };
 }
 
 export async function getUser() {

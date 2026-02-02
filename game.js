@@ -1,7 +1,25 @@
 // game.js
 
+// Game configuration constants
+export const GAME_CONFIG = {
+  MAX_HAND_SIZE: 7,
+  MAX_DECK_SIZE: 35,
+  STARTING_HEALTH: 30,
+  STARTING_MANA: 1,
+  MAX_MANA: 10,
+  TURN_DURATION: 20,
+  INITIAL_DRAW_COUNT: 3,
+  OPPONENT_QUEUE_INTERVAL: 5000,
+  CARD_REVEAL_DELAY: 400,
+  TURN_RESOLVE_DELAY: 3000,
+  CENTER_SPACING: 2,
+  SIDE_SPACING: 0.6,
+  PLAYED_CARDS_DISPLAY_LIMIT: 5
+};
+
 import { Card, cardSets } from './cards.js';
 import { shuffle } from './utils.js';
+import { toast } from './toast.js';
 import { scene, camera, renderer } from './threeSetup.js';
 import { updateUI, log, initUIEvents, hideGameUI } from './ui.js';
 import { supabase } from './supabaseClient.js';
@@ -9,15 +27,15 @@ import { getUserStats, updateUserStats, ensureUserInDB } from './auth.js';
 import { memeToken } from './cards.js';
 
 export const gameState = {
-  player: { health: 30, maxHealth: 30, mana: 1, maxMana: 1, deck: [], hand: [], queuedCards: [], playedCards: [], winStreak: 0, drawCount: 0, totalWins: 0, totalLosses: 0 },
-  opponent: { health: 30, maxHealth: 30, mana: 1, maxMana: 1, deck: [], hand: [], queuedCards: [], playedCards: [], lastPlayedCard: null },
+  player: { health: GAME_CONFIG.STARTING_HEALTH, maxHealth: GAME_CONFIG.STARTING_HEALTH, mana: GAME_CONFIG.STARTING_MANA, maxMana: GAME_CONFIG.STARTING_MANA, deck: [], hand: [], queuedCards: [], playedCards: [], winStreak: 0, drawCount: 0, totalWins: 0, totalLosses: 0 },
+  opponent: { health: GAME_CONFIG.STARTING_HEALTH, maxHealth: GAME_CONFIG.STARTING_HEALTH, mana: GAME_CONFIG.STARTING_MANA, maxMana: GAME_CONFIG.STARTING_MANA, deck: [], hand: [], queuedCards: [], playedCards: [], lastPlayedCard: null, winStreak: 0 },
   selectedCard: null,
   draggingCard: null,
-  turnTimeLeft: 20,
+  turnTimeLeft: GAME_CONFIG.TURN_DURATION,
   turnTimer: null,
   opponentQueueTimer: null,
-  maxHandSize: 7,
-  maxDeckSize: 35,
+  maxHandSize: GAME_CONFIG.MAX_HAND_SIZE,
+  maxDeckSize: GAME_CONFIG.MAX_DECK_SIZE,
   isPaused: false,
   isTurnActive: false,
   playerReady: false,
@@ -103,7 +121,8 @@ async function fetchGrokResponse(prompt) {
     return data.choices[0].message.content.trim();
   } catch (error) {
     console.error('[Grok API] Fetch failed:', error);
-    return null; 
+    log("AI temporarily unavailable, using fallback strategy");
+    return null; // Fallback logic will be used in opponentQueueCard
   }
 }
 
@@ -115,7 +134,8 @@ export async function initializeGame() {
   loadingScreen.style.display = "flex";
 
   clearSceneAndState();
-  
+  attachEventListeners(); // Re-attach after cleanup
+
   let ownedSetIds = [1]; // default to core set
 
   const user = await supabase.auth.getUser();
@@ -172,14 +192,14 @@ export async function initializeGame() {
   gameState.opponent.queuedCards = [];
   gameState.opponent.playedCards = [];
 
-  gameState.player.health = 30;
-  gameState.player.maxHealth = 30;
-  gameState.player.mana = 1;
-  gameState.player.maxMana = 1;
-  gameState.opponent.health = 30;
-  gameState.opponent.maxHealth = 30;
-  gameState.opponent.mana = 1;
-  gameState.opponent.maxMana = 1;
+  gameState.player.health = GAME_CONFIG.STARTING_HEALTH;
+  gameState.player.maxHealth = GAME_CONFIG.STARTING_HEALTH;
+  gameState.player.mana = GAME_CONFIG.STARTING_MANA;
+  gameState.player.maxMana = GAME_CONFIG.STARTING_MANA;
+  gameState.opponent.health = GAME_CONFIG.STARTING_HEALTH;
+  gameState.opponent.maxHealth = GAME_CONFIG.STARTING_HEALTH;
+  gameState.opponent.mana = GAME_CONFIG.STARTING_MANA;
+  gameState.opponent.maxMana = GAME_CONFIG.STARTING_MANA;
   gameState.player.drawCount = 0;
   gameState.lastAbilityUsed = null;
 
@@ -218,19 +238,19 @@ function clearSceneAndState() {
     }
   });
 
-  gameState.player.health = 30;
-  gameState.player.maxHealth = 30;
-  gameState.player.mana = 1;
-  gameState.player.maxMana = 1;
+  gameState.player.health = GAME_CONFIG.STARTING_HEALTH;
+  gameState.player.maxHealth = GAME_CONFIG.STARTING_HEALTH;
+  gameState.player.mana = GAME_CONFIG.STARTING_MANA;
+  gameState.player.maxMana = GAME_CONFIG.STARTING_MANA;
   gameState.player.deck = [];
   gameState.player.hand = [];
   gameState.player.queuedCards = [];
   gameState.player.playedCards = [];
 
-  gameState.opponent.health = 30;
-  gameState.opponent.maxHealth = 30;
-  gameState.opponent.mana = 1;
-  gameState.opponent.maxMana = 1;
+  gameState.opponent.health = GAME_CONFIG.STARTING_HEALTH;
+  gameState.opponent.maxHealth = GAME_CONFIG.STARTING_HEALTH;
+  gameState.opponent.mana = GAME_CONFIG.STARTING_MANA;
+  gameState.opponent.maxMana = GAME_CONFIG.STARTING_MANA;
   gameState.opponent.deck = [];
   gameState.opponent.hand = [];
   gameState.opponent.queuedCards = [];
@@ -239,7 +259,7 @@ function clearSceneAndState() {
 
   gameState.selectedCard = null;
   gameState.draggingCard = null;
-  gameState.turnTimeLeft = 20;
+  gameState.turnTimeLeft = GAME_CONFIG.TURN_DURATION;
   gameState.isPaused = false;
   gameState.isTurnActive = false;
   gameState.playerReady = false;
@@ -259,13 +279,24 @@ function clearSceneAndState() {
     const tooltip = document.getElementById(id);
     if (tooltip) {
       tooltip.style.display = 'none';
-      tooltip.innerHTML = '';
+      tooltip.textContent = '';
     }
   });
+
+  // Clean up event listeners to prevent memory leaks
+  window.removeEventListener('mousemove', onMouseMove);
+  window.removeEventListener('mousedown', onMouseDown);
+  window.removeEventListener('mouseup', onMouseUp);
+  window.removeEventListener('touchstart', onTouchStart);
+  window.removeEventListener('touchmove', onTouchMove);
+  window.removeEventListener('touchend', onTouchEnd);
 }
 
 export function drawCards(player, count) {
-  for (let i = 0; i < count; i++) {
+  // Validate count parameter
+  const drawCount = Math.max(0, Math.floor(Number(count) || 0));
+
+  for (let i = 0; i < drawCount; i++) {
     if (player.deck.length === 0) {
       player.health -= 1;
       log(`${player === gameState.player ? 'Your' : 'Opponent\'s'} deck is empty! Fatigue deals 1 damage (Health: ${player.health})`);
@@ -282,11 +313,22 @@ export function drawCards(player, count) {
     log(`${player === gameState.player ? 'You drew ' + card.data.name : 'Opponent drew a card'}`);
     if (player === gameState.player) gameState.player.drawCount += 1;
   }
+
+  // Enforce hard cap on hand size (safety check)
+  while (player.hand.length > gameState.maxHandSize) {
+    const discarded = player.hand.pop();
+    if (discarded && discarded.mesh) {
+      discarded.mesh.visible = false;
+      scene.remove(discarded.mesh);
+    }
+    log(`${player === gameState.player ? 'Your' : 'Opponent\'s'} hand exceeded limit! Card discarded.`);
+  }
+
   updateBoard();
 }
 
 export function updateBoard() {
-  const centerSpacing = 2;
+  const centerSpacing = GAME_CONFIG.CENTER_SPACING;
 
   gameState.player.hand.forEach((card, index) => {
     card.targetPosition.set((index - (gameState.player.hand.length - 1) / 2) * centerSpacing, -5, 0.5);
@@ -312,15 +354,15 @@ export function updateBoard() {
     card.mesh.scale.set(0.8, 0.8, 0.8);
   });
 
-  const sideSpacing = 0.6;
-  const playerPlayed = gameState.player.playedCards.slice(-5);
+  const sideSpacing = GAME_CONFIG.SIDE_SPACING;
+  const playerPlayed = gameState.player.playedCards.slice(-GAME_CONFIG.PLAYED_CARDS_DISPLAY_LIMIT);
   playerPlayed.forEach((card, index) => {
     card.targetPosition.set((index - (playerPlayed.length - 1) / 2) * sideSpacing + 5, -2, 0.5);
     card.targetRotation.set(0, 0, 0);
     card.mesh.scale.set(0.25, 0.25, 0.25);
   });
 
-  const opponentPlayed = gameState.opponent.playedCards.slice(-5);
+  const opponentPlayed = gameState.opponent.playedCards.slice(-GAME_CONFIG.PLAYED_CARDS_DISPLAY_LIMIT);
   opponentPlayed.forEach((card, index) => {
     card.targetPosition.set((index - (opponentPlayed.length - 1) / 2) * sideSpacing + 5, 2, 0.5);
     card.targetRotation.set(0, 0, 0);
@@ -332,8 +374,9 @@ export function updateBoard() {
 
 export function playCard(card) {
   if (gameState.player.mana < card.data.cost || !gameState.isTurnActive || gameState.isPaused) return;
+  if (!gameState.player.hand.includes(card)) return; // Card not in hand
   gameState.player.mana -= card.data.cost;
-  gameState.player.hand.splice(gameState.player.hand.indexOf(card), 1);
+  gameState.player.hand = gameState.player.hand.filter(c => c !== card);
   gameState.player.queuedCards.push(card);
   log(`You queued ${card.data.name}`);
   updateBoard();
@@ -369,7 +412,7 @@ Pick a card to queue by name or 'pass'.`;
     const chosenCard = gameState.opponent.hand.find(card => card.data.name.toLowerCase() === grokChoice.toLowerCase());
     if (chosenCard && chosenCard.data.cost <= gameState.opponent.mana) {
       gameState.opponent.mana -= chosenCard.data.cost;
-      gameState.opponent.hand.splice(gameState.opponent.hand.indexOf(chosenCard), 1);
+      gameState.opponent.hand = gameState.opponent.hand.filter(c => c !== chosenCard);
       gameState.opponent.queuedCards.push(chosenCard);
       log(`Opponent (Grok) queued a hidden card`);
       gameState.opponent.lastPlayedCard = chosenCard;
@@ -410,7 +453,7 @@ Pick a card to queue by name or 'pass'.`;
 
   if (chosenCard) {
     gameState.opponent.mana -= chosenCard.data.cost;
-    gameState.opponent.hand.splice(gameState.opponent.hand.indexOf(chosenCard), 1);
+    gameState.opponent.hand = gameState.opponent.hand.filter(c => c !== chosenCard);
     gameState.opponent.queuedCards.push(chosenCard);
     log(`Opponent (Grok) queued a hidden card`);
     gameState.opponent.lastPlayedCard = chosenCard;
@@ -422,6 +465,15 @@ Pick a card to queue by name or 'pass'.`;
 }
 
 export function resolveTurn() {
+  // TODO: Future improvement - Extract player/opponent card resolution into shared function
+  // to eliminate code duplication (see player logic ~line 490 and opponent logic ~line 680)
+
+  // Clear timers immediately to prevent race conditions
+  clearInterval(gameState.turnTimer);
+  clearInterval(gameState.opponentQueueTimer);
+  gameState.turnTimer = null;
+  gameState.opponentQueueTimer = null;
+
   gameState.isTurnActive = false;
   gameState.playerReady = false;
   gameState.computerReady = false;
@@ -432,7 +484,7 @@ export function resolveTurn() {
       card.reveal();
       log(`Opponent revealed ${card.data.name}`);
     }, delay);
-    delay += 400;
+    delay += GAME_CONFIG.CARD_REVEAL_DELAY;
   });
 
   setTimeout(async () => {
@@ -534,7 +586,7 @@ export function resolveTurn() {
           log("Silk Archivist increases your max mana by 2 next turn!");
         }
         if (card.data.name === "Singularity Masquerade" && gameState.player.drawCount >= 7) {
-          alert("You win! Singularity Masquerade triggers victory!");
+          toast.success("You win! Singularity Masquerade triggers victory!");
           gameState.player.winStreak++;
           resetGame();
           return;
@@ -739,8 +791,10 @@ export function resolveTurn() {
           log(`Opponent's Darkpool Revenant steals ${stolenCard.data.name} from your hand!`);
         }
         if (card.data.name === "Streak Catalyst") {
-          attack += gameState.player.winStreak;
-          log(`Opponent’s Streak Catalyst gains +${gameState.player.winStreak} Attack!`);
+          // Opponent (AI) doesn't have a persistent win streak, use 0
+          const opponentStreak = gameState.opponent.winStreak || 0;
+          attack += opponentStreak;
+          log(`Opponent's Streak Catalyst gains +${opponentStreak} Attack from win streak!`);
         }
         if (card.data.name === "Chrono Root Singularity") {
           gameState.player.mana = gameState.player.maxMana;
@@ -815,10 +869,10 @@ export function resolveTurn() {
     if (!isGameOver) {
       log("Game continues, preparing next turn");
       setTimeout(() => {
-        gameState.player.mana = Math.min(gameState.player.maxMana + 1, 10);
-        gameState.opponent.mana = Math.min(gameState.opponent.maxMana + 1, 10);
-        gameState.player.maxMana = Math.min(gameState.player.maxMana + 1, 10);
-        gameState.opponent.maxMana = Math.min(gameState.opponent.maxMana + 1, 10);
+        gameState.player.mana = Math.min(gameState.player.maxMana + 1, GAME_CONFIG.MAX_MANA);
+        gameState.opponent.mana = Math.min(gameState.opponent.maxMana + 1, GAME_CONFIG.MAX_MANA);
+        gameState.player.maxMana = Math.min(gameState.player.maxMana + 1, GAME_CONFIG.MAX_MANA);
+        gameState.opponent.maxMana = Math.min(gameState.opponent.maxMana + 1, GAME_CONFIG.MAX_MANA);
         gameState.player.drawCount = 0;
         drawCards(gameState.player, 1);
         drawCards(gameState.opponent, 1);
@@ -828,14 +882,14 @@ export function resolveTurn() {
     } else {
       log("Game over detected, no new turn started");
     }
-  }, gameState.opponent.queuedCards.length * 400 + 3000);
+  }, gameState.opponent.queuedCards.length * GAME_CONFIG.CARD_REVEAL_DELAY + GAME_CONFIG.TURN_RESOLVE_DELAY);
 }
 
 export function startTurnTimer() {
   if (gameState.isPaused) return;
   clearInterval(gameState.turnTimer);
   clearInterval(gameState.opponentQueueTimer);
-  gameState.turnTimeLeft = 20;
+  gameState.turnTimeLeft = GAME_CONFIG.TURN_DURATION;
   gameState.isTurnActive = true;
   gameState.playerReady = false;
   gameState.computerReady = false;
@@ -892,7 +946,7 @@ export function startTurnTimer() {
         log("Grok has finished its turn");
       }
     }
-  }, 5000);
+  }, GAME_CONFIG.OPPONENT_QUEUE_INTERVAL);
 }
 
 export function canComputerQueueMore() {
@@ -1029,7 +1083,18 @@ export function onMouseMove(event) {
         tooltip.style.display = 'block';
         tooltip.style.left = `${event.clientX + 10}px`;
         tooltip.style.top = `${event.clientY - 10}px`;
-        tooltip.innerHTML = `${card.data.name}<br>Cost: ${card.data.cost} | Attack: ${card.data.attack} | Health: ${card.data.health}${card.data.ability ? '<br>' + card.data.ability : ''}`;
+        // Safe tooltip content - avoid XSS
+        tooltip.textContent = '';
+        const nameText = document.createTextNode(card.data.name);
+        tooltip.appendChild(nameText);
+        tooltip.appendChild(document.createElement('br'));
+        const statsText = document.createTextNode(`Cost: ${card.data.cost} | Attack: ${card.data.attack} | Health: ${card.data.health}`);
+        tooltip.appendChild(statsText);
+        if (card.data.ability) {
+          tooltip.appendChild(document.createElement('br'));
+          const abilityText = document.createTextNode(card.data.ability);
+          tooltip.appendChild(abilityText);
+        }
       } else {
         tooltip.style.display = 'none';
       }
@@ -1235,7 +1300,18 @@ function handleMouseMoveLikeInput(x, y) {
         tooltip.style.display = 'block';
         tooltip.style.left = `${x + 10}px`;
         tooltip.style.top = `${y - 10}px`;
-        tooltip.innerHTML = `${card.data.name}<br>Cost: ${card.data.cost} | Attack: ${card.data.attack} | Health: ${card.data.health}${card.data.ability ? '<br>' + card.data.ability : ''}`;
+        // Safe tooltip content - avoid XSS
+        tooltip.textContent = '';
+        const nameText = document.createTextNode(card.data.name);
+        tooltip.appendChild(nameText);
+        tooltip.appendChild(document.createElement('br'));
+        const statsText = document.createTextNode(`Cost: ${card.data.cost} | Attack: ${card.data.attack} | Health: ${card.data.health}`);
+        tooltip.appendChild(statsText);
+        if (card.data.ability) {
+          tooltip.appendChild(document.createElement('br'));
+          const abilityText = document.createTextNode(card.data.ability);
+          tooltip.appendChild(abilityText);
+        }
       } else {
         tooltip.style.display = 'none';
       }
@@ -1266,10 +1342,15 @@ function handleMouseUpLikeInput() {
 
       
 
-window.addEventListener('mousemove', onMouseMove);
-window.addEventListener('mousedown', onMouseDown);
-window.addEventListener('mouseup', onMouseUp);
+// Function to attach event listeners (called on game init)
+export function attachEventListeners() {
+  window.addEventListener('mousemove', onMouseMove);
+  window.addEventListener('mousedown', onMouseDown);
+  window.addEventListener('mouseup', onMouseUp);
+  window.addEventListener('touchstart', onTouchStart, { passive: false });
+  window.addEventListener('touchmove', onTouchMove, { passive: false });
+  window.addEventListener('touchend', onTouchEnd, { passive: false });
+}
 
-window.addEventListener('touchstart', onTouchStart, { passive: false });
-window.addEventListener('touchmove', onTouchMove, { passive: false });
-window.addEventListener('touchend', onTouchEnd, { passive: false });
+// Initial attachment
+attachEventListeners();
