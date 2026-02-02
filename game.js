@@ -17,10 +17,26 @@ export const GAME_CONFIG = {
   PLAYED_CARDS_DISPLAY_LIMIT: 5
 };
 
+// THREE is loaded globally via CDN
 import { Card, cardSets } from './cards.js';
 import { shuffle } from './utils.js';
 import { toast } from './toast.js';
 import { scene, camera, renderer } from './threeSetup.js';
+import {
+  animationManager,
+  Easing,
+  animateCardDraw,
+  animateCardPlay,
+  animateCardHover,
+  animateCardFlip,
+  screenShake,
+  createDamageNumber,
+  createRoundSummary,
+  ParticleSystem,
+  createVictoryEffect,
+  createDefeatEffect,
+  animateHealthBar
+} from './animations.js';
 import { updateUI, log, initUIEvents, hideGameUI } from './ui.js';
 import { supabase } from './supabaseClient.js';
 import { getUserStats, updateUserStats, ensureUserInDB } from './auth.js';
@@ -48,6 +64,9 @@ export const gameState = {
 
   // Lingering damage applied at the start of each new turn
   playerDotDamage: 0,
+
+  // Particle system for effects
+  particleSystem: null,
   playerDotTurns: 0,
   opponentDotDamage: 0,
   opponentDotTurns: 0,
@@ -135,6 +154,9 @@ export async function initializeGame() {
 
   clearSceneAndState();
   attachEventListeners(); // Re-attach after cleanup
+
+  // Initialize particle system for effects
+  gameState.particleSystem = new ParticleSystem(scene);
 
   let ownedSetIds = [1]; // default to core set
 
@@ -271,6 +293,11 @@ function clearSceneAndState() {
   gameState.turnTimer = null;
   gameState.opponentQueueTimer = null;
 
+  // Clean up particle system for performance
+  if (gameState.particleSystem && gameState.particleSystem.dispose) {
+    gameState.particleSystem.dispose();
+  }
+
   const logDiv = document.getElementById('gameLog');
   if (logDiv) logDiv.innerHTML = '';
 
@@ -295,23 +322,36 @@ function clearSceneAndState() {
 export function drawCards(player, count) {
   // Validate count parameter
   const drawCount = Math.max(0, Math.floor(Number(count) || 0));
+  const isPlayer = player === gameState.player;
 
   for (let i = 0; i < drawCount; i++) {
     if (player.deck.length === 0) {
       player.health -= 1;
-      log(`${player === gameState.player ? 'Your' : 'Opponent\'s'} deck is empty! Fatigue deals 1 damage (Health: ${player.health})`);
+      log(`${isPlayer ? 'Your' : 'Opponent\'s'} deck is empty! Fatigue deals 1 damage (Health: ${player.health})`);
+      // Screen shake on fatigue
+      screenShake(camera, 0.2, 200);
       continue;
     }
     if (player.hand.length >= gameState.maxHandSize) {
-      log(`${player === gameState.player ? 'Your' : 'Opponent\'s'} hand is full! Card discarded.`);
+      log(`${isPlayer ? 'Your' : 'Opponent\'s'} hand is full! Card discarded.`);
       player.deck.shift();
       continue;
     }
     const card = player.deck.shift();
-    card.mesh.visible = true; // Show card when drawn into hand
+    card.mesh.visible = true;
     player.hand.push(card);
-    log(`${player === gameState.player ? 'You drew ' + card.data.name : 'Opponent drew a card'}`);
-    if (player === gameState.player) gameState.player.drawCount += 1;
+    log(`${isPlayer ? 'You drew ' + card.data.name : 'Opponent drew a card'}`);
+    if (isPlayer) gameState.player.drawCount += 1;
+
+    // Animate card draw with delay for multiple cards
+    const handIndex = player.hand.length - 1;
+    const targetX = (handIndex - (player.hand.length - 1) / 2) * GAME_CONFIG.CENTER_SPACING;
+    const targetY = isPlayer ? -5 : 5;
+    const targetPos = new THREE.Vector3(targetX, targetY, 0.5);
+
+    setTimeout(() => {
+      animateCardDraw(card, targetPos, isPlayer);
+    }, i * 150); // Stagger card draws
   }
 
   // Enforce hard cap on hand size (safety check)
@@ -321,10 +361,11 @@ export function drawCards(player, count) {
       discarded.mesh.visible = false;
       scene.remove(discarded.mesh);
     }
-    log(`${player === gameState.player ? 'Your' : 'Opponent\'s'} hand exceeded limit! Card discarded.`);
+    log(`${isPlayer ? 'Your' : 'Opponent\'s'} hand exceeded limit! Card discarded.`);
   }
 
-  updateBoard();
+  // Delay updateBoard to let animations play
+  setTimeout(() => updateBoard(), drawCount * 150 + 600);
 }
 
 export function updateBoard() {
@@ -375,10 +416,26 @@ export function updateBoard() {
 export function playCard(card) {
   if (gameState.player.mana < card.data.cost || !gameState.isTurnActive || gameState.isPaused) return;
   if (!gameState.player.hand.includes(card)) return; // Card not in hand
+
   gameState.player.mana -= card.data.cost;
   gameState.player.hand = gameState.player.hand.filter(c => c !== card);
   gameState.player.queuedCards.push(card);
   log(`You queued ${card.data.name}`);
+
+  // Mana spend particle effect
+  if (gameState.particleSystem) {
+    gameState.particleSystem.createManaParticles(card.mesh.position.clone());
+  }
+
+  // Animate card to queue position
+  const queueIndex = gameState.player.queuedCards.length - 1;
+  const targetPos = new THREE.Vector3(
+    (queueIndex - (gameState.player.queuedCards.length - 1) / 2) * GAME_CONFIG.CENTER_SPACING,
+    -2,
+    0.5
+  );
+  animateCardPlay(card, targetPos);
+
   updateBoard();
 }
 
@@ -480,14 +537,21 @@ export function resolveTurn() {
 
   let delay = 0;
   gameState.opponent.queuedCards.forEach((card, index) => {
-    setTimeout(() => {
-      card.reveal();
+    setTimeout(async () => {
+      // Use animated flip instead of instant reveal
+      await animateCardFlip(card);
       log(`Opponent revealed ${card.data.name}`);
     }, delay);
-    delay += GAME_CONFIG.CARD_REVEAL_DELAY;
+    delay += GAME_CONFIG.CARD_REVEAL_DELAY + 200; // Extra time for flip animation
   });
 
   setTimeout(async () => {
+    // Accumulators for round summary
+    let totalPlayerDamageDealt = 0;
+    let totalPlayerHealReceived = 0;
+    let totalOpponentDamageDealt = 0;
+    let totalOpponentHealReceived = 0;
+
     let playerLastCard = null;
     let lastPlayerAbility = null;
     gameState.player.queuedCards.forEach(card => {
@@ -662,8 +726,25 @@ export function resolveTurn() {
         }
       }
 
-      gameState.opponent.health -= attack;
-      gameState.player.health += health;
+      // Apply damage (accumulate for round summary)
+      if (attack > 0) {
+        gameState.opponent.health -= attack;
+        totalPlayerDamageDealt += attack;
+        screenShake(camera, 0.15 + attack * 0.02, 200);
+        if (gameState.particleSystem) {
+          gameState.particleSystem.createDamageParticles(new THREE.Vector3(0, 3, 1), attack * 2);
+        }
+      }
+
+      // Apply heal (accumulate for round summary)
+      if (health > 0) {
+        gameState.player.health += health;
+        totalPlayerHealReceived += health;
+        if (gameState.particleSystem) {
+          gameState.particleSystem.createHealParticles(new THREE.Vector3(0, -3, 1), health * 2);
+        }
+      }
+
       log(`${card.data.name}: Deals ${attack} damage to opponent (Health: ${gameState.opponent.health}), Heals you for ${health} (Health: ${gameState.player.health})`);
 
       playerLastCard = card;
@@ -847,8 +928,25 @@ export function resolveTurn() {
         }
       }
 
-      gameState.player.health -= attack;
-      gameState.opponent.health += health;
+      // Apply damage to player (accumulate for round summary)
+      if (attack > 0) {
+        gameState.player.health -= attack;
+        totalOpponentDamageDealt += attack;
+        screenShake(camera, 0.2 + attack * 0.03, 250);
+        if (gameState.particleSystem) {
+          gameState.particleSystem.createDamageParticles(new THREE.Vector3(0, -3, 1), attack * 2);
+        }
+      }
+
+      // Apply heal to opponent (accumulate for round summary)
+      if (health > 0) {
+        gameState.opponent.health += health;
+        totalOpponentHealReceived += health;
+        if (gameState.particleSystem) {
+          gameState.particleSystem.createHealParticles(new THREE.Vector3(0, 3, 1), health * 2);
+        }
+      }
+
       log(`${card.data.name}: Deals ${attack} damage to you (Health: ${gameState.player.health}), Heals opponent for ${health} (Health: ${gameState.opponent.health})`);
 
       opponentLastCard = card;
@@ -862,6 +960,15 @@ export function resolveTurn() {
 
     gameState.player.playedCards = gameState.player.playedCards.filter(c => c.data.name !== "Meme Token");
     gameState.opponent.playedCards = gameState.opponent.playedCards.filter(c => c.data.name !== "Meme Token");
+
+    // Show round summary with aggregated totals (damage and heal with spacing)
+    createRoundSummary(
+      scene,
+      totalPlayerDamageDealt,
+      totalPlayerHealReceived,
+      totalOpponentDamageDealt,
+      totalOpponentHealReceived
+    );
 
     updateBoard();
     log("Turn resolved, checking game over state");
@@ -958,26 +1065,39 @@ export async function checkGameOver() {
     log("Opponent wins!");
     gameState.player.winStreak = 0;
     gameState.player.totalLosses += 1;
+
+    // Defeat effects
+    createDefeatEffect(scene);
+    screenShake(camera, 0.5, 500);
+
     if (gameState.userId && !gameState.userId.startsWith('guest_')) {
       await updateUserStats(gameState.userId, gameState.player.totalWins, gameState.player.totalLosses, gameState.player.winStreak);
       log(`Stats updated: Loss recorded (Wins: ${gameState.player.totalWins}, Losses: ${gameState.player.totalLosses}, Streak: ${gameState.player.winStreak})`);
     } else {
       log("Guest mode: Stats updated locally but not saved.");
     }
-    showGameOverScreen(false);
+
+    // Delay game over screen to let effects play
+    setTimeout(() => showGameOverScreen(false), 2500);
     return true;
   } else if (gameState.opponent.health <= 0) {
     log("You win!");
     gameState.player.winStreak += 1;
     gameState.player.totalWins += 1;
     log(`Win streak increased to ${gameState.player.winStreak}!`);
+
+    // Victory effects
+    createVictoryEffect(scene);
+
     if (gameState.userId && !gameState.userId.startsWith('guest_')) {
       await updateUserStats(gameState.userId, gameState.player.totalWins, gameState.player.totalLosses, gameState.player.winStreak);
       log(`Stats updated: Win recorded (Wins: ${gameState.player.totalWins}, Losses: ${gameState.player.totalLosses}, Streak: ${gameState.player.winStreak})`);
     } else {
       log("Guest mode: Stats updated locally but not saved.");
     }
-    showGameOverScreen(true);
+
+    // Delay game over screen to let effects play
+    setTimeout(() => showGameOverScreen(true), 2500);
     return true;
   }
   return false;
@@ -1052,7 +1172,15 @@ export function resetGame() {
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
+// Throttle helper for performance
+let lastMouseMoveTime = 0;
+const MOUSE_THROTTLE_MS = 16; // ~60fps
+
 export function onMouseMove(event) {
+  // Throttle mouse move events for performance
+  const now = performance.now();
+  if (now - lastMouseMoveTime < MOUSE_THROTTLE_MS) return;
+  lastMouseMoveTime = now;
   if (gameState.isPaused) return;
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -1062,6 +1190,7 @@ export function onMouseMove(event) {
   const tooltip = document.getElementById('cardTooltip');
 
   let hovered = false;
+  let hoveredCard = null;
 
   if (intersects.length > 0) {
     const card = intersects[0].object.userData;
@@ -1073,10 +1202,16 @@ export function onMouseMove(event) {
 
     if (card && allCards.includes(card)) {
       hovered = true;
-      const isPlayedCard = gameState.player.playedCards.includes(card) || gameState.opponent.playedCards.includes(card);
-      const scale = isPlayedCard ? 1 : 2;
-      card.mesh.scale.set(scale, scale, scale);
-      card.mesh.position.z = 2;
+      hoveredCard = card;
+
+      // Check if card is in hand vs played
+      const isInHand = gameState.player.hand.includes(card);
+
+      // Track hover state to prevent repeated animations
+      if (!card._isHovered) {
+        card._isHovered = true;
+        animateCardHover(card, true, isInHand);
+      }
 
       const currentTexture = card.mesh.material.uniforms.cardTexture.value;
       if (card.isPlayer || (currentTexture && currentTexture.image && currentTexture.image.src === card.data.texture)) {
@@ -1101,13 +1236,16 @@ export function onMouseMove(event) {
     }
   }
 
+  // Reset hover state for cards no longer being hovered
+  [...gameState.player.hand, ...gameState.player.playedCards.slice(-5), ...gameState.opponent.playedCards.slice(-5)].forEach(card => {
+    if (card._isHovered && card !== hoveredCard) {
+      card._isHovered = false;
+      const isInHand = gameState.player.hand.includes(card);
+      animateCardHover(card, false, isInHand);
+    }
+  });
+
   if (!hovered) {
-    [...gameState.player.hand, ...gameState.player.playedCards.slice(-5), ...gameState.opponent.playedCards.slice(-5)].forEach(card => {
-      const isPlayedCard = gameState.player.playedCards.includes(card) || gameState.opponent.playedCards.includes(card);
-      const scale = isPlayedCard ? 0.25 : 1;
-      card.mesh.scale.set(scale, scale, scale);
-      card.targetPosition.z = 0.5;
-    });
     tooltip.style.display = 'none';
   }
 }
@@ -1141,21 +1279,43 @@ export function onMouseUp(event) {
   gameState.selectedCard = null;
 }
 
-export function animate() {
+// Frame timing for smooth animation
+let lastFrameTime = 0;
+const TARGET_FRAME_TIME = 1000 / 60; // 60fps target
+
+export function animate(currentTime = 0) {
   if (!gameState.isPaused) {
     requestAnimationFrame(animate);
+
+    // Calculate delta time for frame-independent animation
+    const deltaTime = currentTime - lastFrameTime;
+
+    // Skip frame if too fast (helps with high refresh rate monitors)
+    if (deltaTime < TARGET_FRAME_TIME * 0.5) return;
+    lastFrameTime = currentTime;
 
     if (gameState.draggingCard) {
       const targetZ = gameState.draggingCard.mesh.position.z;
       gameState.draggingCard.mesh.position.set(mouse.x * 20, mouse.y * 15, targetZ + 5);
     }
 
-    gameState.player.hand.forEach(card => card.update());
-    gameState.player.queuedCards.forEach(card => card.update());
-    gameState.opponent.hand.forEach(card => card.update());
-    gameState.opponent.queuedCards.forEach(card => card.update());
-    gameState.player.playedCards.slice(-5).forEach(card => card.update());
-    gameState.opponent.playedCards.slice(-5).forEach(card => card.update());
+    // Batch card updates for better performance
+    const allCards = [
+      ...gameState.player.hand,
+      ...gameState.player.queuedCards,
+      ...gameState.opponent.hand,
+      ...gameState.opponent.queuedCards,
+      ...gameState.player.playedCards.slice(-5),
+      ...gameState.opponent.playedCards.slice(-5)
+    ];
+
+    // Only update cards that need updating (visible and moving)
+    for (let i = 0; i < allCards.length; i++) {
+      const card = allCards[i];
+      if (card.mesh.visible) {
+        card.update();
+      }
+    }
 
     renderer.render(scene, camera);
   }

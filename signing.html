@@ -57,33 +57,73 @@
     </div>
 
     <div id="postLogin" class="post-login" style="display: none;">
-        <h2 id="welcomeMessage" class="post-login-title">Welcome, Anon</h2>
+        <!-- Animated background particles -->
+        <div class="post-login-particles"></div>
+
+        <!-- Header Section -->
+        <div class="post-login-header">
+            <div class="avatar-ring">
+                <img src="/assets/logomasq1-g11o.gif" alt="Avatar" class="avatar-img">
+            </div>
+            <h2 id="welcomeMessage" class="post-login-title">Welcome, Anon</h2>
+            <p class="post-login-subtitle">Ready to enter the MASQuerade?</p>
+        </div>
+
+        <!-- Stats Grid -->
         <div class="player-stats" id="playerStats" style="display: none;">
-            <div class="stats-header">Your Legacy</div>
-            <div class="stats-item">
-                <span class="stats-label">Victories:</span>
-                <span class="stats-value" id="postLoginWins">0</span>
+            <div class="stats-header">
+                <span class="stats-icon">⚔️</span>
+                Your Legacy
+                <span class="stats-icon">⚔️</span>
             </div>
-            <div class="stats-item">
-                <span class="stats-label">Defeats:</span>
-                <span class="stats-value" id="postLoginLosses">0</span>
+            <div class="stats-grid">
+                <div class="stat-card stat-wins">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-number" id="postLoginWins">0</div>
+                    <div class="stat-label">Victories</div>
+                </div>
+                <div class="stat-card stat-losses">
+                    <div class="stat-icon">💀</div>
+                    <div class="stat-number" id="postLoginLosses">0</div>
+                    <div class="stat-label">Defeats</div>
+                </div>
+                <div class="stat-card stat-streak">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-number" id="postLoginStreak">0</div>
+                    <div class="stat-label">Win Streak</div>
+                </div>
             </div>
-            <div class="stats-item">
-                <span class="stats-label">Winning Streak:</span>
-                <span class="stats-value" id="postLoginStreak">0</span>
-            </div>
-            <div class="stats-item">
-                <span class="stats-label">Packs Owned:</span>
-                <span class="stats-value" style="font-size: 10px;" id="packsOwned">0</span>
-            </div>
-            <div class="stats-item">
-                <span class="stats-label">Wallet:</span>
-                <span class="stats-value" style="font-size: 8px;" id="walletConn">0</span>
+
+            <!-- Info Cards -->
+            <div class="info-cards">
+                <div class="info-card">
+                    <div class="info-icon">🎴</div>
+                    <div class="info-content">
+                        <span class="info-label">Packs Owned</span>
+                        <span class="info-value" id="packsOwned">None</span>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon">💎</div>
+                    <div class="info-content">
+                        <span class="info-label">Wallet</span>
+                        <span class="info-value wallet-address" id="walletConn">Not Connected</span>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <!-- Action Buttons -->
         <div class="post-login-buttons">
-            <button class="post-login-btn play-btn" id="startGameBtn">PLAY the Game</button>
-            <button class="post-login-btn buy-btn" id="buyPacksBtn">Buy packs</button>
+            <button class="post-login-btn play-btn" id="startGameBtn">
+                <span class="btn-icon">▶</span>
+                <span class="btn-text">PLAY GAME</span>
+                <span class="btn-glow"></span>
+            </button>
+            <button class="post-login-btn buy-btn" id="buyPacksBtn">
+                <span class="btn-icon">🛒</span>
+                <span class="btn-text">CARD SHOP</span>
+            </button>
         </div>
     </div>
 

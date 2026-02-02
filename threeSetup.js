@@ -21,11 +21,30 @@ export const camera = new THREE.OrthographicCamera(
 camera.position.set(0, 0, 5);
 camera.lookAt(0, 0, 0);
 
-export const renderer = new THREE.WebGLRenderer({ 
-  canvas: document.getElementById('gameCanvas'), 
-  antialias: true 
+export const renderer = new THREE.WebGLRenderer({
+  canvas: document.getElementById('gameCanvas'),
+  antialias: true,
+  powerPreference: 'high-performance'
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
+// Limit pixel ratio for performance on high-DPI screens
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+// Handle window resize efficiently
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    const aspect = window.innerWidth / window.innerHeight;
+    const frustumSize = 15;
+    camera.left = frustumSize * aspect / -2;
+    camera.right = frustumSize * aspect / 2;
+    camera.top = frustumSize / 2;
+    camera.bottom = frustumSize / -2;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }, 100);
+});
 
 scene.background = textureLoader.load('/assets/bgbg2.png');
 
