@@ -85,16 +85,14 @@
 
   /* Pack Showcase Section */
   .pack-showcase {
-    background: linear-gradient(145deg, rgba(20, 15, 10, 0.95), rgba(30, 20, 15, 0.9));
-    border: 2px solid #FFD700;
-    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(26, 26, 26, 0.95), rgba(43, 43, 43, 0.4));
+    border: 50px solid transparent;
+    border-image: url('/assets/button2.png') 300 round;
+    border-radius: 12px;
     padding: 30px;
     position: relative;
     overflow: hidden;
-    box-shadow:
-      0 0 40px rgba(255, 215, 0, 0.2),
-      0 0 80px rgba(255, 0, 0, 0.1),
-      inset 0 0 60px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.15), inset 0 0 6px rgba(255, 0, 0, 0.1);
   }
 
   .pack-showcase::before {
@@ -119,17 +117,19 @@
 
   .pack-badge {
     display: inline-block;
-    background: linear-gradient(135deg, #FF0000, #8B0000);
+    background: url('/assets/button2.gif') no-repeat center center / cover;
     color: #FFD700;
     font-family: 'Orbitron', sans-serif;
     font-size: 0.7rem;
     font-weight: 700;
-    padding: 6px 16px;
-    border-radius: 20px;
+    padding: 8px 18px;
+    border-radius: 6px;
     margin-bottom: 15px;
     letter-spacing: 2px;
     text-transform: uppercase;
     box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+    border: 2px solid #FF0000;
+    text-shadow: 0 0 5px #FF0000;
   }
 
   .pack-title {
@@ -138,7 +138,7 @@
     font-weight: 700;
     color: #FFD700;
     margin-bottom: 8px;
-    text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+    text-shadow: 0 0 10px #FF0000, 0 0 20px #FF4500;
   }
 
   .pack-description {
@@ -181,14 +181,15 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background: rgba(255, 215, 0, 0.1);
+    background: rgba(255, 0, 0, 0.1);
     padding: 10px 16px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 0, 0, 0.3);
   }
 
   .detail-icon {
     font-size: 1.2rem;
+    color: #FFD700;
   }
 
   .detail-text {
@@ -202,10 +203,10 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    background: linear-gradient(135deg, rgba(255, 0, 0, 0.2), rgba(139, 0, 0, 0.3));
+    background: url('/assets/button2.gif') no-repeat center center / cover;
     padding: 20px;
     border-radius: 12px;
-    border: 1px solid rgba(255, 0, 0, 0.4);
+    border: 2px solid #FF0000;
     margin-bottom: 20px;
   }
 
@@ -228,15 +229,17 @@
     font-size: 1rem;
     color: #FF0000;
     font-weight: 600;
+    text-shadow: 0 0 5px #FF0000;
   }
 
   /* Card Preview Section */
   .card-preview-section {
-    background: linear-gradient(145deg, rgba(15, 15, 20, 0.95), rgba(25, 20, 30, 0.9));
-    border: 2px solid rgba(255, 215, 0, 0.4);
-    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(26, 26, 26, 0.95), rgba(43, 43, 43, 0.4));
+    border: 50px solid transparent;
+    border-image: url('/assets/button2.png') 300 round;
+    border-radius: 12px;
     padding: 30px;
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.15), inset 0 0 6px rgba(255, 0, 0, 0.1);
   }
 
   .preview-title {
@@ -245,7 +248,7 @@
     color: #FFD700;
     margin-bottom: 25px;
     text-align: center;
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+    text-shadow: 0 0 10px #FF0000, 0 0 20px #FF4500;
   }
 
   .cards-grid {
@@ -311,12 +314,13 @@
   /* Purchase Section */
   .purchase-section {
     grid-column: 1 / -1;
-    background: linear-gradient(145deg, rgba(20, 15, 25, 0.95), rgba(30, 20, 35, 0.9));
-    border: 2px solid rgba(255, 215, 0, 0.3);
-    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(26, 26, 26, 0.95), rgba(43, 43, 43, 0.4));
+    border: 50px solid transparent;
+    border-image: url('/assets/button2.png') 300 round;
+    border-radius: 12px;
     padding: 40px;
     text-align: center;
-    box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.15), inset 0 0 6px rgba(255, 0, 0, 0.1);
   }
 
   .purchase-title {
@@ -324,7 +328,7 @@
     font-size: 1.5rem;
     color: #FFD700;
     margin-bottom: 30px;
-    text-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    text-shadow: 0 0 10px #FF0000, 0 0 20px #FF4500;
   }
 
   .purchase-steps {
@@ -345,7 +349,8 @@
   .step-number {
     width: 40px;
     height: 40px;
-    background: linear-gradient(135deg, #FF0000, #8B0000);
+    background: url('/assets/button2.gif') no-repeat center center / cover;
+    border: 2px solid #FF0000;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -354,6 +359,7 @@
     font-weight: 700;
     color: #FFD700;
     box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
+    text-shadow: 0 0 5px #FF0000;
   }
 
   .step-text {
@@ -371,35 +377,30 @@
     opacity: 0.5;
   }
 
-  /* Buttons */
+  /* Buttons - Matching homepage style */
   .btn-primary {
     display: inline-block;
     padding: 18px 45px;
     font-family: 'Cinzel', serif;
     font-size: 1.1rem;
-    font-weight: 600;
-    color: #FFD700;
-    background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
-    border: 3px solid #FFD700;
+    font-weight: bold;
+    color: white;
+    background: url('/assets/button2.gif') no-repeat center center / cover;
+    border: 2px solid #FF0000;
     border-radius: 12px;
     cursor: pointer;
     text-transform: uppercase;
     letter-spacing: 2px;
     transition: all 0.3s ease;
-    box-shadow:
-      0 0 20px rgba(255, 215, 0, 0.3),
-      inset 0 0 20px rgba(255, 215, 0, 0.1);
+    box-shadow: inset 0 0 10px #000, 0 0 10px #FFD700;
     margin: 10px;
+    text-shadow: 0 0 5px #FF0000;
   }
 
   .btn-primary:hover {
-    background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
-    box-shadow:
-      0 0 40px rgba(255, 215, 0, 0.5),
-      0 0 60px rgba(255, 0, 0, 0.3),
-      inset 0 0 30px rgba(255, 215, 0, 0.2);
-    transform: translateY(-3px) scale(1.02);
-    color: #fff;
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(255, 0, 0, 0.7), 0 0 35px rgba(255, 69, 0, 0.4);
+    background: linear-gradient(90deg, #FF4500, #FF0000);
   }
 
   .btn-primary:disabled {
@@ -413,34 +414,38 @@
     padding: 18px 45px;
     font-family: 'Cinzel', serif;
     font-size: 1.1rem;
-    font-weight: 600;
-    color: #FF0000;
-    background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
-    border: 3px solid #FF0000;
+    font-weight: bold;
+    color: white;
+    background: url('/assets/button2.gif') no-repeat center center / cover;
+    border: 2px solid #FF0000;
     border-radius: 12px;
     cursor: pointer;
     text-transform: uppercase;
     letter-spacing: 2px;
     transition: all 0.3s ease;
-    box-shadow:
-      0 0 20px rgba(255, 0, 0, 0.2),
-      inset 0 0 20px rgba(255, 0, 0, 0.05);
+    box-shadow: inset 0 0 10px #000, 0 0 10px #FFD700;
     margin: 10px;
+    text-shadow: 0 0 5px #FF0000;
+    animation: pulseGlow 2s infinite ease-in-out;
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: inset 0 0 10px #000, 0 0 10px #FFD700; }
+    50% { box-shadow: inset 0 0 10px #000, 0 0 25px #FFD700, 0 0 35px rgba(255, 0, 0, 0.5); }
   }
 
   .btn-secondary:hover {
-    background: linear-gradient(135deg, #FF0000, #8B0000);
-    color: #FFD700;
-    box-shadow:
-      0 0 40px rgba(255, 0, 0, 0.5),
-      inset 0 0 30px rgba(255, 215, 0, 0.1);
-    transform: translateY(-3px) scale(1.02);
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(255, 0, 0, 0.7), 0 0 35px rgba(255, 69, 0, 0.4);
+    background: linear-gradient(90deg, #FF4500, #FF0000);
+    animation: none;
   }
 
   /* Status & Info Display */
   .info-panel {
     background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(255, 215, 0, 0.3);
+    border: 20px solid transparent;
+    border-image: url('/assets/button2.png') 300 round;
     border-radius: 12px;
     padding: 20px;
     margin-top: 25px;
@@ -452,7 +457,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 12px 0;
-    border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+    border-bottom: 1px solid rgba(255, 0, 0, 0.2);
   }
 
   .info-row:last-child {
@@ -486,9 +491,9 @@
     color: #FFD700;
     margin-top: 15px;
     padding: 15px;
-    background: rgba(255, 215, 0, 0.1);
+    background: rgba(255, 0, 0, 0.1);
     border-radius: 8px;
-    border: 1px solid rgba(255, 215, 0, 0.2);
+    border: 1px solid rgba(255, 0, 0, 0.3);
     display: none;
   }
 
@@ -496,54 +501,54 @@
     display: none;
   }
 
-  /* Auth Panel */
+  /* Auth Panel - Matching homepage style */
   .auth-panel {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: linear-gradient(145deg, rgba(15, 10, 20, 0.98), rgba(25, 15, 30, 0.98));
-    border: 2px solid #FFD700;
-    border-radius: 20px;
-    padding: 40px;
+    padding: 32px;
+    border: 50px solid transparent;
+    border-image: url('/assets/button2.png') 300 round;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(26, 26, 26, 0.95), rgba(43, 43, 43, 0.4));
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.15), inset 0 0 6px rgba(255, 0, 0, 0.1);
     z-index: 2000;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    box-shadow:
-      0 0 60px rgba(255, 215, 0, 0.3),
-      0 0 100px rgba(255, 0, 0, 0.2),
-      inset 0 0 60px rgba(0, 0, 0, 0.5);
+    font-family: 'Cinzel', serif;
+    color: #FFD700;
+    text-shadow: 0 0 10px #FF0000, 0 0 20px #FF4500;
+    min-width: 300px;
     max-width: 400px;
     width: 90%;
+    text-align: center;
   }
 
   .auth-panel h2 {
     font-family: 'Cinzel', serif;
     color: #FFD700;
     margin-bottom: 25px;
-    text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
-    font-size: 1.4rem;
+    text-shadow: 0 0 10px #FF0000, 0 0 20px #FF4500;
+    font-size: 1.2rem;
     text-align: center;
   }
 
   .auth-panel input {
     width: 100%;
+    padding: 10px;
     margin: 10px 0;
-    padding: 14px 18px;
-    border: 2px solid rgba(255, 215, 0, 0.3);
-    border-radius: 10px;
-    font-size: 1rem;
-    font-family: 'Roboto', sans-serif;
-    background: rgba(0, 0, 0, 0.6);
-    color: #fff;
+    font-size: 15px;
+    background: #2B2B2B;
+    border: 1px solid rgba(255, 0, 0, 0.5);
+    border-radius: 6px;
+    color: #FFD700;
+    box-shadow: inset 0 0 5px rgba(255, 0, 0, 0.1);
     transition: all 0.3s ease;
   }
 
   .auth-panel input:focus {
+    border-color: #FF0000;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
     outline: none;
-    border-color: #FFD700;
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
   }
 
   .auth-panel input::placeholder {
@@ -552,37 +557,39 @@
 
   .auth-buttons {
     display: flex;
-    gap: 15px;
-    margin-top: 20px;
-    width: 100%;
+    justify-content: space-between;
+    margin-top: 14px;
   }
 
   .auth-buttons button {
     flex: 1;
-    padding: 14px 20px;
+    margin: 0 5px;
+    padding: 12px 16px;
+    background: url('/assets/button2.gif') no-repeat center center / cover;
+    border: 10px solid transparent;
+    border-image: url('/assets/button2.gif') 300 round;
+    text-shadow: 0 0 5px #FF0000;
+    color: white;
+    font-weight: bold;
     font-family: 'Cinzel', serif;
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #FFD700;
-    background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
-    border: 2px solid #FFD700;
-    border-radius: 10px;
     cursor: pointer;
     transition: all 0.3s ease;
+    border-radius: 6px;
   }
 
   .auth-buttons button:hover {
-    background: linear-gradient(135deg, #FFD700, #FFA500);
-    color: #000;
-    box-shadow: 0 0 25px rgba(255, 215, 0, 0.5);
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(255, 0, 0, 0.7), 0 0 35px rgba(255, 69, 0, 0.4);
+    background: linear-gradient(90deg, #FF4500, #FF0000);
   }
 
   .auth-note {
-    font-size: 0.8rem;
-    color: #666;
-    margin-top: 20px;
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: 15px;
     text-align: center;
     line-height: 1.4;
+    text-shadow: none;
   }
 
   /* Loading Spinner */
@@ -602,8 +609,8 @@
   .spinner-circle {
     width: 60px;
     height: 60px;
-    border: 4px solid rgba(255, 215, 0, 0.2);
-    border-top-color: #FFD700;
+    border: 4px solid rgba(255, 0, 0, 0.2);
+    border-top-color: #FF0000;
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
@@ -638,6 +645,10 @@
     .step-arrow {
       display: none;
     }
+
+    .pack-showcase, .card-preview-section, .purchase-section {
+      border-width: 30px;
+    }
   }
 
   @media (max-width: 600px) {
@@ -652,6 +663,8 @@
 
     .pack-showcase, .card-preview-section, .purchase-section {
       padding: 20px;
+      border-width: 25px;
+      border-image: url('/assets/button2.png') 75 round;
     }
 
     .pack-title {
@@ -676,6 +689,31 @@
     .cards-grid {
       grid-template-columns: repeat(3, 1fr);
       gap: 8px;
+    }
+
+    .auth-panel {
+      padding: 20px;
+      min-width: 200px;
+      max-width: 90%;
+      border-width: 25px;
+      border-image: url('/assets/button2.png') 75 round;
+    }
+
+    .auth-panel h2 {
+      font-size: 1rem;
+    }
+
+    .auth-buttons {
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .auth-buttons button {
+      margin: 5px 0;
+    }
+
+    .info-panel {
+      border-width: 15px;
     }
   }
 </style>
@@ -828,14 +866,14 @@
 
 <!-- Auth Panel -->
 <div class="auth-panel" id="authPanel">
-  <h2>Login to Access Store</h2>
-  <input type="email" id="email" placeholder="Email" />
+  <h2>Signup / Login to Access Store</h2>
+  <input type="text" id="username" placeholder="Username" autocomplete="off" />
   <input type="password" id="password" placeholder="Password" />
   <div class="auth-buttons">
     <button onclick="handleSignup()">Sign Up</button>
     <button onclick="handleLogin()">Login</button>
   </div>
-  <p class="auth-note">Email confirmation not required.<br>Use any email format as your username.</p>
+  <p class="auth-note">Use the same credentials as the game login.</p>
 </div>
 
 <script type="module">
@@ -848,10 +886,10 @@ function showLoadingSpinner(show = true) {
 
 async function handleSignup() {
   showLoadingSpinner(true);
-  const email = document.getElementById("email").value;
+  const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value;
   try {
-    const result = await signUp(email, password);
+    const result = await signUp(username, password);
     if (result?.error) {
       alert("Signup failed: " + result.error.message);
       showLoadingSpinner(false);
@@ -867,10 +905,10 @@ async function handleSignup() {
 
 async function handleLogin() {
   showLoadingSpinner(true);
-  const email = document.getElementById("email").value;
+  const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value;
   try {
-    const result = await login(email, password);
+    const result = await login(username, password);
     if (result?.error || !result?.user) {
       alert("Login failed: " + (result?.error?.message || "Invalid credentials."));
       showLoadingSpinner(false);
