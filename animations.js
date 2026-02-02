@@ -247,19 +247,35 @@ export async function animateCardPlay(card, targetPosition) {
 // Card hover animation
 export function animateCardHover(card, isHovering, isInHand = true) {
   const mesh = card.mesh;
-  // Larger zoom for cards in hand, smaller for played cards
-  const targetScale = isHovering ? (isInHand ? 2.0 : 0.35) : (isInHand ? 1.0 : 0.25);
-  const targetZ = isHovering ? 2.5 : 0.5;
+  // Larger zoom for cards in hand, bigger for played cards too
+  const targetScale = isHovering ? (isInHand ? 2.0 : 0.6) : (isInHand ? 1.0 : 0.25);
+  const targetZ = isHovering ? 3.0 : 0.5;
+
+  // Store original Y position if not stored
+  if (isInHand && isHovering && card._originalY === undefined) {
+    card._originalY = mesh.position.y;
+  }
 
   animationManager.animateScale(mesh, targetScale, 200, Easing.easeOutBack);
+
+  // Raise card higher when hovering in hand to prevent bottom cutoff
+  const targetY = isInHand && isHovering ? (card._originalY || mesh.position.y) + 1.5 : (card._originalY || mesh.position.y);
 
   animationManager.animate({
     duration: 200,
     easing: Easing.easeOutCubic,
     onUpdate: (progress) => {
       mesh.position.z = mesh.position.z + (targetZ - mesh.position.z) * progress * 0.3;
+      if (isInHand) {
+        mesh.position.y = mesh.position.y + (targetY - mesh.position.y) * progress * 0.3;
+      }
     }
   });
+
+  // Reset original Y when not hovering
+  if (!isHovering && card._originalY !== undefined) {
+    delete card._originalY;
+  }
 }
 
 // Card flip animation (for revealing opponent cards)
@@ -361,15 +377,16 @@ export function createDamageNumber(scene, position, amount, isHeal = false) {
   sprite.scale.set(1.5, 0.75, 1);
   scene.add(sprite);
 
-  // Animate floating up and fading
+  // Animate floating up and fading - longer duration for visibility
   const startY = position.y;
   animationManager.animate({
-    duration: 1000,
+    duration: 2500,
     easing: Easing.easeOutCubic,
     onUpdate: (progress) => {
-      sprite.position.y = startY + progress * 2;
-      sprite.material.opacity = 1 - progress;
-      sprite.scale.set(1.5 + progress * 0.5, 0.75 + progress * 0.25, 1);
+      sprite.position.y = startY + progress * 3;
+      // Fade out only in last 40% of animation
+      sprite.material.opacity = progress < 0.6 ? 1 : 1 - ((progress - 0.6) / 0.4);
+      sprite.scale.set(1.8 + progress * 0.5, 0.9 + progress * 0.25, 1);
     },
     onComplete: () => {
       scene.remove(sprite);
