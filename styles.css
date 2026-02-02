@@ -810,24 +810,21 @@ button:hover {
   left: 50%;
   transform: translate(-50%, -50%);
   background: linear-gradient(165deg, rgba(12, 12, 18, 0.98), rgba(20, 18, 28, 0.98));
-  padding: 0;
-  border-radius: 20px;
-  border: 2px solid rgba(255, 215, 0, 0.4);
-  box-shadow:
-    0 25px 80px rgba(0, 0, 0, 0.9),
-    0 0 80px rgba(255, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  padding: 20px;
+  border-radius: 15px;
+  border: 40px solid transparent;
+  border-image: url('/assets/button2.png') 120 round;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.9), 0 0 60px rgba(255, 0, 0, 0.15);
   z-index: 90;
   display: none;
   flex-direction: column;
   align-items: center;
   gap: 0;
-  width: 460px;
+  width: 500px;
   max-width: 95%;
   box-sizing: border-box;
   backdrop-filter: blur(25px);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .post-login::before {
@@ -871,9 +868,9 @@ button:hover {
 }
 
 .avatar-ring {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 15px;
+  width: 55px;
+  height: 55px;
+  margin: 0 auto 12px;
   border-radius: 50%;
   padding: 0;
   background: none;
@@ -1456,21 +1453,21 @@ button:hover {
 
 .timer {
   position: absolute;
-  top: 45%;
-  right: 8%;
-  transform: translateY(-50%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   font-family: 'Orbitron', sans-serif;
-  font-size: 42px;
+  font-size: 48px;
   color: #FFD700;
-  text-shadow: 0 0 15px rgba(255, 0, 0, 0.8), 0 0 30px rgba(255, 69, 0, 0.5);
+  text-shadow: 0 0 20px rgba(255, 0, 0, 0.9), 0 0 40px rgba(255, 69, 0, 0.6);
   pointer-events: none;
   animation: timerPulse 1.5s infinite ease-in-out;
   display: none;
-  background: rgba(10, 10, 15, 0.85);
-  padding: 12px 24px;
-  border-radius: 14px;
-  border: 2px solid rgba(255, 215, 0, 0.5);
-  box-shadow: 0 0 25px rgba(255, 0, 0, 0.4), inset 0 0 15px rgba(0, 0, 0, 0.5);
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
 }
 
 @keyframes timerPulseWarning {
@@ -2222,17 +2219,19 @@ button,
   .post-login {
     width: 95%;
     max-width: 400px;
-    border-radius: 16px;
+    border-radius: 12px;
+    border-width: 25px;
+    padding: 15px;
   }
 
   .post-login-header {
-    padding: 20px 20px 15px;
+    padding: 15px 15px 12px;
   }
 
   .avatar-ring {
-    width: 70px;
-    height: 70px;
-    margin-bottom: 10px;
+    width: 45px;
+    height: 45px;
+    margin-bottom: 8px;
   }
 
   .post-login-title {
@@ -2414,11 +2413,10 @@ button,
   }
 
   .timer {
-    font-size: 24px;
-    right: 5%;
-    top: 42%;
-    padding: 8px 14px;
-    border-radius: 10px;
+    font-size: 28px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 
   .game-stats {
