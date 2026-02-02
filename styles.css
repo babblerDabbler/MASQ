@@ -1246,7 +1246,7 @@ button:hover {
 
 .health-fill {
   height: 100%;
-  background: linear-gradient(90deg, #D4AF37, #FFD700);
+  background: linear-gradient(to right, #8B4513, #D4AF37);
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
   border-radius: 5px 0 0 5px;
   box-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
