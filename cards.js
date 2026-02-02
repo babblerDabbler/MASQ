@@ -128,11 +128,6 @@ function getCachedTexture(url) {
     return textureCache.get(url);
   }
   const texture = textureLoader.load(url);
-  // Set texture filtering for sharper appearance
-  texture.minFilter = THREE.LinearFilter;
-  texture.magFilter = THREE.LinearFilter;
-  texture.generateMipmaps = false;
-  texture.anisotropy = 16;
   textureCache.set(url, texture);
   return texture;
 }

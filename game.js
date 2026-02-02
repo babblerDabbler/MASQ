@@ -292,6 +292,11 @@ function clearSceneAndState() {
   gameState.turnTimer = null;
   gameState.opponentQueueTimer = null;
 
+  // Clean up particle system for performance
+  if (gameState.particleSystem && gameState.particleSystem.dispose) {
+    gameState.particleSystem.dispose();
+  }
+
   const logDiv = document.getElementById('gameLog');
   if (logDiv) logDiv.innerHTML = '';
 
@@ -714,23 +719,23 @@ export function resolveTurn() {
         }
       }
 
-      // Apply damage with effects
+      // Apply damage with effects (damage shown on left side)
       if (attack > 0) {
         gameState.opponent.health -= attack;
         // Damage effects
         screenShake(camera, 0.15 + attack * 0.02, 200);
-        createDamageNumber(scene, new THREE.Vector3(0, 3, 2), attack, false);
+        createDamageNumber(scene, new THREE.Vector3(-1.5, 3, 2), attack, false);
         if (gameState.particleSystem) {
-          gameState.particleSystem.createDamageParticles(new THREE.Vector3(0, 3, 1), attack * 2);
+          gameState.particleSystem.createDamageParticles(new THREE.Vector3(-1.5, 3, 1), attack * 2);
         }
       }
 
-      // Apply heal with effects
+      // Apply heal with effects (heal shown on right side)
       if (health > 0) {
         gameState.player.health += health;
-        createDamageNumber(scene, new THREE.Vector3(0, -3, 2), health, true);
+        createDamageNumber(scene, new THREE.Vector3(1.5, -3, 2), health, true);
         if (gameState.particleSystem) {
-          gameState.particleSystem.createHealParticles(new THREE.Vector3(0, -3, 1), health * 2);
+          gameState.particleSystem.createHealParticles(new THREE.Vector3(1.5, -3, 1), health * 2);
         }
       }
 
@@ -917,22 +922,22 @@ export function resolveTurn() {
         }
       }
 
-      // Apply damage to player with effects
+      // Apply damage to player with effects (damage shown on left side)
       if (attack > 0) {
         gameState.player.health -= attack;
         screenShake(camera, 0.2 + attack * 0.03, 250);
-        createDamageNumber(scene, new THREE.Vector3(0, -3, 2), attack, false);
+        createDamageNumber(scene, new THREE.Vector3(-1.5, -3, 2), attack, false);
         if (gameState.particleSystem) {
-          gameState.particleSystem.createDamageParticles(new THREE.Vector3(0, -3, 1), attack * 2);
+          gameState.particleSystem.createDamageParticles(new THREE.Vector3(-1.5, -3, 1), attack * 2);
         }
       }
 
-      // Apply heal to opponent with effects
+      // Apply heal to opponent with effects (heal shown on right side)
       if (health > 0) {
         gameState.opponent.health += health;
-        createDamageNumber(scene, new THREE.Vector3(0, 3, 2), health, true);
+        createDamageNumber(scene, new THREE.Vector3(1.5, 3, 2), health, true);
         if (gameState.particleSystem) {
-          gameState.particleSystem.createHealParticles(new THREE.Vector3(0, 3, 1), health * 2);
+          gameState.particleSystem.createHealParticles(new THREE.Vector3(1.5, 3, 1), health * 2);
         }
       }
 
@@ -1152,7 +1157,15 @@ export function resetGame() {
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
+// Throttle helper for performance
+let lastMouseMoveTime = 0;
+const MOUSE_THROTTLE_MS = 16; // ~60fps
+
 export function onMouseMove(event) {
+  // Throttle mouse move events for performance
+  const now = performance.now();
+  if (now - lastMouseMoveTime < MOUSE_THROTTLE_MS) return;
+  lastMouseMoveTime = now;
   if (gameState.isPaused) return;
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -1251,21 +1264,43 @@ export function onMouseUp(event) {
   gameState.selectedCard = null;
 }
 
-export function animate() {
+// Frame timing for smooth animation
+let lastFrameTime = 0;
+const TARGET_FRAME_TIME = 1000 / 60; // 60fps target
+
+export function animate(currentTime = 0) {
   if (!gameState.isPaused) {
     requestAnimationFrame(animate);
+
+    // Calculate delta time for frame-independent animation
+    const deltaTime = currentTime - lastFrameTime;
+
+    // Skip frame if too fast (helps with high refresh rate monitors)
+    if (deltaTime < TARGET_FRAME_TIME * 0.5) return;
+    lastFrameTime = currentTime;
 
     if (gameState.draggingCard) {
       const targetZ = gameState.draggingCard.mesh.position.z;
       gameState.draggingCard.mesh.position.set(mouse.x * 20, mouse.y * 15, targetZ + 5);
     }
 
-    gameState.player.hand.forEach(card => card.update());
-    gameState.player.queuedCards.forEach(card => card.update());
-    gameState.opponent.hand.forEach(card => card.update());
-    gameState.opponent.queuedCards.forEach(card => card.update());
-    gameState.player.playedCards.slice(-5).forEach(card => card.update());
-    gameState.opponent.playedCards.slice(-5).forEach(card => card.update());
+    // Batch card updates for better performance
+    const allCards = [
+      ...gameState.player.hand,
+      ...gameState.player.queuedCards,
+      ...gameState.opponent.hand,
+      ...gameState.opponent.queuedCards,
+      ...gameState.player.playedCards.slice(-5),
+      ...gameState.opponent.playedCards.slice(-5)
+    ];
+
+    // Only update cards that need updating (visible and moving)
+    for (let i = 0; i < allCards.length; i++) {
+      const card = allCards[i];
+      if (card.mesh.visible) {
+        card.update();
+      }
+    }
 
     renderer.render(scene, camera);
   }

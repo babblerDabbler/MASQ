@@ -259,7 +259,7 @@ export function animateCardHover(card, isHovering, isInHand = true) {
   animationManager.animateScale(mesh, targetScale, 200, Easing.easeOutBack);
 
   // Raise card higher when hovering in hand to prevent bottom cutoff
-  const targetY = isInHand && isHovering ? (card._originalY || mesh.position.y) + 1.5 : (card._originalY || mesh.position.y);
+  const targetY = isInHand && isHovering ? (card._originalY || mesh.position.y) + 4.5 : (card._originalY || mesh.position.y);
 
   animationManager.animate({
     duration: 200,
@@ -344,8 +344,22 @@ export function screenShake(camera, intensity = 0.3, duration = 300) {
   });
 }
 
+// Damage number pool for reuse
+const damageNumberPool = [];
+const MAX_DAMAGE_NUMBERS = 10;
+
 // Floating damage number
 export function createDamageNumber(scene, position, amount, isHeal = false) {
+  // Limit active damage numbers for performance
+  if (damageNumberPool.length >= MAX_DAMAGE_NUMBERS) {
+    const oldSprite = damageNumberPool.shift();
+    if (oldSprite && oldSprite.parent) {
+      scene.remove(oldSprite);
+      oldSprite.material.dispose();
+      oldSprite.material.map.dispose();
+    }
+  }
+
   const canvas = document.createElement('canvas');
   canvas.width = 128;
   canvas.height = 64;
@@ -376,6 +390,7 @@ export function createDamageNumber(scene, position, amount, isHeal = false) {
   sprite.position.z = 3;
   sprite.scale.set(1.5, 0.75, 1);
   scene.add(sprite);
+  damageNumberPool.push(sprite);
 
   // Animate floating up and fading - longer duration for visibility
   const startY = position.y;
@@ -390,6 +405,8 @@ export function createDamageNumber(scene, position, amount, isHeal = false) {
     },
     onComplete: () => {
       scene.remove(sprite);
+      const idx = damageNumberPool.indexOf(sprite);
+      if (idx > -1) damageNumberPool.splice(idx, 1);
       material.dispose();
       texture.dispose();
     }
@@ -397,18 +414,49 @@ export function createDamageNumber(scene, position, amount, isHeal = false) {
 }
 
 // ============================================================================
-// PARTICLE SYSTEM
+// PARTICLE SYSTEM (with object pooling for performance)
 // ============================================================================
 
 export class ParticleSystem {
   constructor(scene) {
     this.scene = scene;
     this.particles = [];
+    // Object pool for reusing particle geometries
+    this.geometryPool = [];
+    this.maxPoolSize = 20;
+  }
+
+  // Get geometry from pool or create new
+  getGeometry(size) {
+    if (this.geometryPool.length > 0) {
+      return this.geometryPool.pop();
+    }
+    return new THREE.BufferGeometry();
+  }
+
+  // Return geometry to pool for reuse
+  returnGeometry(geometry) {
+    if (this.geometryPool.length < this.maxPoolSize) {
+      this.geometryPool.push(geometry);
+    } else {
+      geometry.dispose();
+    }
+  }
+
+  // Limit active particles for performance
+  cleanupOldParticles() {
+    if (this.particles.length > 10) {
+      const oldParticle = this.particles.shift();
+      if (oldParticle && oldParticle.parent) {
+        this.scene.remove(oldParticle);
+      }
+    }
   }
 
   // Create damage particles (red sparks)
   createDamageParticles(position, amount = 10) {
-    const geometry = new THREE.BufferGeometry();
+    this.cleanupOldParticles();
+    const geometry = this.getGeometry(amount);
     const positions = new Float32Array(amount * 3);
     const velocities = [];
 
@@ -446,8 +494,10 @@ export class ParticleSystem {
 
       if (progress >= 1) {
         this.scene.remove(points);
-        geometry.dispose();
+        this.returnGeometry(geometry);
         material.dispose();
+        const idx = this.particles.indexOf(points);
+        if (idx > -1) this.particles.splice(idx, 1);
         return;
       }
 
@@ -463,12 +513,14 @@ export class ParticleSystem {
       requestAnimationFrame(animate);
     };
 
+    this.particles.push(points);
     animate();
   }
 
   // Create heal particles (green sparkles)
   createHealParticles(position, amount = 15) {
-    const geometry = new THREE.BufferGeometry();
+    this.cleanupOldParticles();
+    const geometry = this.getGeometry(amount);
     const positions = new Float32Array(amount * 3);
     const velocities = [];
 
@@ -508,8 +560,10 @@ export class ParticleSystem {
 
       if (progress >= 1) {
         this.scene.remove(points);
-        geometry.dispose();
+        this.returnGeometry(geometry);
         material.dispose();
+        const idx = this.particles.indexOf(points);
+        if (idx > -1) this.particles.splice(idx, 1);
         return;
       }
 
@@ -526,12 +580,14 @@ export class ParticleSystem {
       requestAnimationFrame(animate);
     };
 
+    this.particles.push(points);
     animate();
   }
 
   // Create mana particles (blue swirl)
   createManaParticles(position, amount = 12) {
-    const geometry = new THREE.BufferGeometry();
+    this.cleanupOldParticles();
+    const geometry = this.getGeometry(amount);
     const positions = new Float32Array(amount * 3);
 
     for (let i = 0; i < amount; i++) {
@@ -562,8 +618,10 @@ export class ParticleSystem {
 
       if (progress >= 1) {
         this.scene.remove(points);
-        geometry.dispose();
+        this.returnGeometry(geometry);
         material.dispose();
+        const idx = this.particles.indexOf(points);
+        if (idx > -1) this.particles.splice(idx, 1);
         return;
       }
 
@@ -581,7 +639,20 @@ export class ParticleSystem {
       requestAnimationFrame(animate);
     };
 
+    this.particles.push(points);
     animate();
+  }
+
+  // Cleanup all particles (call when game ends)
+  dispose() {
+    this.particles.forEach(p => {
+      if (p.parent) this.scene.remove(p);
+      if (p.geometry) p.geometry.dispose();
+      if (p.material) p.material.dispose();
+    });
+    this.particles = [];
+    this.geometryPool.forEach(g => g.dispose());
+    this.geometryPool = [];
   }
 }
 
