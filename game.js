@@ -147,7 +147,7 @@ export async function initializeGame() {
   const imagesToLoad = [
     '/assets/back1.png',
     '/assets/bgbg2.png',
-    '/assets//bgbg1.png',
+    '/assets/bgbg1.png',
     ...availableCards.map(card => card.texture)
   ];
 
@@ -774,13 +774,13 @@ export function resolveTurn() {
           }
         }
         if (card.data.name === "Bonk Pup") {
-          drawCards(gameState.player, 1);
-          const lastCard = gameState.player.hand[gameState.player.hand.length - 1];
+          drawCards(gameState.opponent, 1);
+          const lastCard = gameState.opponent.hand[gameState.opponent.hand.length - 1];
           if (lastCard && lastCard.data.cost <= 2) {
             card.data.attack += 1;
-            log("Bonk Pup barks! Drawn card costs 2 or less — gains +1 Attack this turn.");
+            log("Opponent's Bonk Pup barks! Drawn card costs 2 or less — gains +1 Attack this turn.");
           } else {
-            log("Bonk Pup draws, but no bonus this time.");
+            log("Opponent's Bonk Pup draws, but no bonus this time.");
           }
         }
         if (card.data.name === "Pump.fun Meme Forge") {

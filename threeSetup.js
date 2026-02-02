@@ -27,7 +27,7 @@ export const renderer = new THREE.WebGLRenderer({
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
 
-scene.background = textureLoader.load('/assets//bgbg2.png');
+scene.background = textureLoader.load('/assets/bgbg2.png');
 
 
 const ambientLight = new THREE.AmbientLight(0xFFFFFF, 1);
