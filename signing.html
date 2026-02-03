@@ -85,9 +85,17 @@
         .main-content {
             opacity: 0;
             transition: opacity 0.5s ease;
+            width: 100%;
+            min-height: 100vh;
+            position: relative;
         }
         .main-content.loaded {
             opacity: 1;
+        }
+        /* Ensure fixed elements stay positioned correctly */
+        .main-content .header {
+            left: 0;
+            right: 0;
         }
     </style>
 </head>
