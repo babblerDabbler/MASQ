@@ -296,3 +296,23 @@ export async function getUserWallet(userId) {
   console.log(`Wallet retrieved for user ${userId}: ${data.wallet}`);
   return data.wallet;
 }
+
+// Fetch user's PVP rating (defaults to 1000 for new players)
+export async function getUserPvpRating(userId) {
+  if (!userId || userId.startsWith('guest_')) {
+    return 1000;
+  }
+
+  const { data, error } = await supabase
+    .from('users')
+    .select('pvp_rating')
+    .eq('id', userId)
+    .single();
+
+  if (error || !data) {
+    console.warn("Error fetching PVP rating, defaulting to 1000:", error?.message);
+    return 1000;
+  }
+
+  return data.pvp_rating || 1000;
+}

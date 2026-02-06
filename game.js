@@ -70,6 +70,9 @@ export const gameState = {
   playerDotTurns: 0,
   opponentDotDamage: 0,
   opponentDotTurns: 0,
+
+  // PVP mode flag - set to true when in PVP match
+  pvpMode: false,
 };
 
 
@@ -994,6 +997,13 @@ export function resolveTurn() {
 
 export function startTurnTimer() {
   if (gameState.isPaused) return;
+
+  // In PVP mode, delegate to PVP turn timer to avoid AI opponent logic
+  if (gameState.pvpMode) {
+    import('./pvp.js').then(({ startPvpTurnTimer }) => startPvpTurnTimer());
+    return;
+  }
+
   clearInterval(gameState.turnTimer);
   clearInterval(gameState.opponentQueueTimer);
   gameState.turnTimeLeft = GAME_CONFIG.TURN_DURATION;
@@ -1063,6 +1073,15 @@ export function canComputerQueueMore() {
 export async function checkGameOver() {
   if (gameState.player.health <= 0) {
     log("Opponent wins!");
+
+    // In PVP mode, notify server of match result and handle via PVP module
+    if (gameState.pvpMode) {
+      const { pvpState } = await import('./pvp.js');
+      // Server handles stats/ELO updates for PVP
+      // The match end will be broadcast via Realtime
+      return true;
+    }
+
     gameState.player.winStreak = 0;
     gameState.player.totalLosses += 1;
 
@@ -1082,6 +1101,14 @@ export async function checkGameOver() {
     return true;
   } else if (gameState.opponent.health <= 0) {
     log("You win!");
+
+    // In PVP mode, notify server of match result and handle via PVP module
+    if (gameState.pvpMode) {
+      const { pvpState } = await import('./pvp.js');
+      // Server handles stats/ELO updates for PVP
+      return true;
+    }
+
     gameState.player.winStreak += 1;
     gameState.player.totalWins += 1;
     log(`Win streak increased to ${gameState.player.winStreak}!`);
@@ -1325,6 +1352,13 @@ export function animate(currentTime = 0) {
 window.endTheGame = async function() {
   const confirmEnd = confirm("Are you sure you want to end the game? This will count as a loss.");
   if (!confirmEnd) return;
+
+  // In PVP mode, forfeit through the PVP module
+  if (gameState.pvpMode) {
+    const { pvpForfeit } = await import('./pvp.js');
+    await pvpForfeit();
+    return;
+  }
 
   console.log("Game ended. Counting as player loss.");
 

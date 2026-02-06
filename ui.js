@@ -31,14 +31,26 @@ export function log(message) {
 }
 
 export function initUIEvents() {
-  document.getElementById('endTurnBtn').addEventListener('click', () => {
+  document.getElementById('endTurnBtn').addEventListener('click', async () => {
     if (!gameState.isPaused && gameState.isTurnActive) {
+      // In PVP mode, use PVP end turn logic (sends data to server)
+      if (gameState.pvpMode) {
+        const { pvpEndTurn } = await import('./pvp.js');
+        pvpEndTurn();
+        return;
+      }
       gameState.playerReady = true;
       log("Player is ready to end turn");
     }
   });
 
   document.getElementById('pauseBtn').addEventListener('click', () => {
+    // Disable pause in PVP mode (can't pause a real-time match)
+    if (gameState.pvpMode) {
+      log("Cannot pause during a PVP match");
+      return;
+    }
+
     gameState.isPaused = !gameState.isPaused;
     document.getElementById('pauseBtn').textContent = gameState.isPaused ? "Resume" : "Pause";
     log(gameState.isPaused ? "Game paused" : "Game resumed");
@@ -49,7 +61,7 @@ export function initUIEvents() {
       log("Timers paused");
     } else if (gameState.isTurnActive) {
       log(`Resuming turn with ${gameState.turnTimeLeft} seconds left`);
-      
+
       // Restart turn timer
       gameState.turnTimer = setInterval(() => {
         if (!gameState.isPaused) {
@@ -74,7 +86,7 @@ export function initUIEvents() {
             log("Computer has finished queuing cards");
           }
         }
-      }, 2000); 
+      }, 2000);
 
       animate();
     }

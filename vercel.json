@@ -8,6 +8,8 @@
     { "source": "/holders", "destination": "/holders.html" },
     { "source": "/leaders", "destination": "/leaders.html" },
     { "source": "/terminal", "destination": "/terminal.html" },
-    { "source": "/signing", "destination": "/signing.html" }
+    { "source": "/signing", "destination": "/signing.html" },
+    { "source": "/pvp", "destination": "/signing.html" },
+    { "source": "/play", "destination": "/signing.html" }
   ]
 }
