@@ -819,8 +819,8 @@ button:hover {
   display: none;
   flex-direction: column;
   align-items: center;
-  gap: 0;
-  width: 500px;
+  gap: 4px;
+  width: 480px;
   max-width: 95%;
   box-sizing: border-box;
   backdrop-filter: blur(25px);
@@ -860,7 +860,7 @@ button:hover {
 /* Header Section */
 .post-login-header {
   width: 100%;
-  padding: 30px 30px 20px;
+  padding: 20px 20px 12px;
   text-align: center;
   position: relative;
   z-index: 1;
@@ -909,12 +909,12 @@ button:hover {
 
 /* Player Stats Section */
 .player-stats {
-  width: calc(100% - 40px);
-  margin: 0 20px;
-  padding: 20px 25px;
+  width: calc(100% - 32px);
+  margin: 0 16px;
+  padding: 16px 20px;
   background: rgba(20, 20, 30, 0.5);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 215, 0, 0.15);
   box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
   position: relative;
   z-index: 1;
@@ -1076,9 +1076,9 @@ button:hover {
 .post-login-buttons {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  width: calc(100% - 40px);
-  margin: 20px 20px 25px;
+  gap: 10px;
+  width: calc(100% - 32px);
+  margin: 8px 16px 16px;
   padding: 0;
   position: relative;
   z-index: 1;
@@ -1089,7 +1089,7 @@ button:hover {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  padding: 18px 30px;
+  padding: 15px 28px;
   font-family: 'Orbitron', sans-serif;
   font-size: 15px;
   color: white;
@@ -2698,45 +2698,45 @@ button,
 .pvp-rating-display {
   display: flex;
   justify-content: center;
-  margin-bottom: 15px;
+  margin-top: 10px;
 }
 
 .pvp-rating-badge {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 20px;
-  background: rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 215, 0, 0.3);
-  border-radius: 20px;
+  gap: 8px;
+  padding: 6px 16px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 16px;
   font-family: 'Orbitron', sans-serif;
 }
 
 .pvp-rank-icon {
-  font-size: 20px;
+  font-size: 16px;
 }
 
 .pvp-rating-value {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
   color: #FFD700;
-  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
 }
 
 .pvp-rank-name {
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
 }
 
-/* --- Matchmaking Overlay --- */
-.matchmaking-overlay {
+/* --- PVP Lobby Overlay --- */
+.pvp-lobby-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.88);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -2744,79 +2744,268 @@ button,
   animation: fadeIn 0.3s ease-out;
 }
 
-.matchmaking-overlay.fade-out {
+.pvp-lobby-overlay.fade-out {
   animation: fadeOut 0.3s ease-in forwards;
 }
 
-.matchmaking-content {
-  text-align: center;
-  padding: 40px;
-  background: linear-gradient(135deg, rgba(10, 10, 15, 0.95) 0%, rgba(26, 16, 21, 0.95) 100%);
-  border: 2px solid rgba(255, 69, 0, 0.4);
+.pvp-lobby-content {
+  width: 460px;
+  max-width: 95%;
+  max-height: 80vh;
+  background: linear-gradient(165deg, rgba(12, 12, 18, 0.98), rgba(20, 16, 24, 0.98));
+  border: 2px solid rgba(255, 69, 0, 0.35);
   border-radius: 16px;
-  box-shadow: 0 0 40px rgba(255, 0, 0, 0.2), inset 0 0 20px rgba(0, 0, 0, 0.5);
-  max-width: 400px;
-  width: 90%;
+  box-shadow: 0 0 50px rgba(255, 0, 0, 0.15), inset 0 0 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.matchmaking-spinner {
-  width: 60px;
-  height: 60px;
-  margin: 0 auto 20px;
-  border: 4px solid rgba(255, 255, 255, 0.1);
-  border-top: 4px solid #FF4500;
-  border-right: 4px solid #FFD700;
+.pvp-lobby-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid rgba(255, 69, 0, 0.2);
+  background: linear-gradient(180deg, rgba(139, 0, 0, 0.15) 0%, transparent 100%);
+}
+
+.pvp-lobby-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  color: #FFD700;
+  text-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
+  letter-spacing: 3px;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.pvp-lobby-close-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 28px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.pvp-lobby-close-btn:hover {
+  color: #FF4500;
+  transform: none;
+  box-shadow: none;
+}
+
+.pvp-lobby-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.pvp-lobby-actions {
+  margin-bottom: 20px;
+}
+
+.pvp-create-room-btn {
+  width: 100%;
+  padding: 14px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  color: #FFD700;
+  background: linear-gradient(135deg, #8B0000 0%, #DC143C 50%, #8B0000 100%);
+  border: 2px solid #FFD700;
+  border-radius: 10px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  transition: all 0.3s ease;
+}
+
+.pvp-create-room-btn:hover {
+  background: linear-gradient(135deg, #a00000 0%, #ff1744 50%, #a00000 100%);
+  box-shadow: 0 0 25px rgba(255, 0, 0, 0.4), 0 0 40px rgba(255, 215, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Room List */
+.pvp-lobby-rooms {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pvp-lobby-loading,
+.pvp-lobby-empty {
+  text-align: center;
+  padding: 30px 20px;
+  color: rgba(255, 255, 255, 0.4);
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+}
+
+.pvp-lobby-empty-hint {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.25);
+  margin-top: 8px;
+}
+
+/* Room Card */
+.pvp-room-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: rgba(25, 25, 35, 0.7);
+  border: 1px solid rgba(255, 215, 0, 0.12);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.pvp-room-card:hover {
+  border-color: rgba(255, 215, 0, 0.3);
+  background: rgba(35, 30, 45, 0.8);
+}
+
+.pvp-room-own {
+  border-color: rgba(255, 69, 0, 0.3);
+  background: rgba(139, 0, 0, 0.15);
+}
+
+.pvp-room-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pvp-room-code {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  color: #FFD700;
+  letter-spacing: 1px;
+}
+
+.pvp-room-creator {
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.pvp-room-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.pvp-room-rating {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+}
+
+.pvp-room-time {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+  font-family: 'Roboto', sans-serif;
+}
+
+.pvp-room-yours {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  color: rgba(255, 69, 0, 0.6);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.pvp-join-btn {
+  padding: 8px 20px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  color: #FFD700;
+  background: linear-gradient(135deg, rgba(139, 0, 0, 0.6), rgba(220, 20, 60, 0.6));
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 6px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+}
+
+.pvp-join-btn:hover {
+  background: linear-gradient(135deg, rgba(180, 0, 0, 0.8), rgba(255, 30, 70, 0.8));
+  border-color: #FFD700;
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Waiting Room State */
+.pvp-waiting-room {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 20px;
+  gap: 20px;
+}
+
+.pvp-room-code-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.pvp-room-code-label {
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.pvp-room-code-value {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 32px;
+  color: #FFD700;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+  letter-spacing: 4px;
+}
+
+.pvp-waiting-spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid #FF4500;
+  border-right: 3px solid #FFD700;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.matchmaking-title {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 20px;
-  color: #FFD700;
-  text-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
-  margin-bottom: 15px;
-  letter-spacing: 2px;
-}
-
-.matchmaking-time {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 36px;
-  color: #FF4500;
-  text-shadow: 0 0 20px rgba(255, 69, 0, 0.6);
-  margin: 10px 0;
-}
-
-.matchmaking-status {
+.pvp-waiting-text {
   font-family: 'Cinzel', serif;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.5);
   letter-spacing: 1px;
-  margin-bottom: 25px;
 }
 
-.matchmaking-cancel-btn {
+.pvp-cancel-room-btn {
+  padding: 10px 28px;
   font-family: 'Orbitron', sans-serif;
-  font-size: 14px;
-  padding: 10px 30px;
-  background: rgba(255, 0, 0, 0.2);
-  border: 1px solid rgba(255, 0, 0, 0.4);
+  font-size: 12px;
   color: #FF6B6B;
+  background: rgba(255, 0, 0, 0.15);
+  border: 1px solid rgba(255, 0, 0, 0.3);
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  text-transform: uppercase;
   letter-spacing: 1px;
+  transition: all 0.2s ease;
 }
 
-.matchmaking-cancel-btn:hover {
-  background: rgba(255, 0, 0, 0.4);
+.pvp-cancel-room-btn:hover {
+  background: rgba(255, 0, 0, 0.3);
   border-color: #FF0000;
   color: #FFF;
-  box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+  transform: none;
 }
 
 /* --- PVP Mode Indicator (during gameplay) --- */
@@ -2894,17 +3083,39 @@ button,
 
 /* --- PVP Responsive adjustments --- */
 @media (max-width: 768px) {
-  .matchmaking-content {
-    padding: 25px;
-    max-width: 320px;
+  .pvp-lobby-content {
+    max-height: 85vh;
+    border-radius: 12px;
   }
 
-  .matchmaking-title {
+  .pvp-lobby-header {
+    padding: 14px 18px;
+  }
+
+  .pvp-lobby-title {
     font-size: 16px;
+    letter-spacing: 2px;
   }
 
-  .matchmaking-time {
-    font-size: 28px;
+  .pvp-lobby-body {
+    padding: 15px 18px;
+  }
+
+  .pvp-create-room-btn {
+    padding: 12px;
+    font-size: 12px;
+  }
+
+  .pvp-room-card {
+    padding: 12px 14px;
+  }
+
+  .pvp-room-code {
+    font-size: 12px;
+  }
+
+  .pvp-room-code-value {
+    font-size: 24px;
   }
 
   .pvp-mode-indicator {
@@ -2913,11 +3124,15 @@ button,
   }
 
   .pvp-rating-badge {
-    padding: 6px 14px;
+    padding: 5px 12px;
   }
 
   .pvp-rating-value {
-    font-size: 14px;
+    font-size: 13px;
+  }
+
+  .pvp-rank-name {
+    font-size: 10px;
   }
 }
 

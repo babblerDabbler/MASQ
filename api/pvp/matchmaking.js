@@ -1,15 +1,15 @@
 // api/pvp/matchmaking.js
-// Server-side matchmaking endpoint for PVP
-// Handles queue join, queue leave, and match pairing
+// Server-side PVP room/lobby matchmaking endpoint
 //
-// Security: All operations are authenticated via Supabase JWT.
-// The server validates the user's identity before any matchmaking action.
+// Room-based flow:
+//   1. Player A clicks "PVP Match" → creates a room with a short code (e.g. MASQ-A7B2)
+//   2. Room appears in the lobby for all players to see
+//   3. Player B browses lobby, clicks on Player A's room → joins it
+//   4. Match starts immediately for both players
 //
-// Race condition prevention:
-//   - Only join_queue triggers match pairing (check_match is read-only)
-//   - Opponent is claimed via DELETE...RETURNING (atomic removal from queue)
-//   - If two requests race to claim the same opponent, only one DELETE succeeds
-//   - Active match check before pairing prevents duplicate matches
+// Actions: create_room, list_rooms, join_room, leave_room
+//
+// Security: All operations authenticated via Supabase JWT.
 
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
@@ -17,19 +17,14 @@ import crypto from 'crypto';
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Rating range widens over time to prevent infinite queue
-const INITIAL_RATING_RANGE = 200;
-const RATING_RANGE_EXPANSION_PER_SECOND = 10;
-const MAX_RATING_RANGE = 1000;
-const MAX_QUEUE_TIME_SECONDS = 60;
+// Rooms expire after 5 minutes of waiting
+const ROOM_EXPIRY_SECONDS = 300;
 
 export default async function handler(req, res) {
-  // Only allow POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Validate environment
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
     console.error('[PVP Matchmaking] Missing env vars:', {
       hasUrl: !!SUPABASE_URL,
@@ -40,15 +35,13 @@ export default async function handler(req, res) {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-  // Extract auth token from request
+  // Authenticate user
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Unauthorized: missing auth token' });
   }
 
   const token = authHeader.replace('Bearer ', '');
-
-  // Verify the user's JWT
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) {
     return res.status(401).json({ error: 'Unauthorized: invalid token' });
@@ -58,12 +51,16 @@ export default async function handler(req, res) {
 
   try {
     switch (action) {
-      case 'join_queue':
-        return await handleJoinQueue(supabase, user, res);
-      case 'leave_queue':
-        return await handleLeaveQueue(supabase, user, res);
-      case 'check_match':
-        return await handleCheckMatch(supabase, user, res);
+      case 'create_room':
+        return await handleCreateRoom(supabase, user, res);
+      case 'list_rooms':
+        return await handleListRooms(supabase, user, res);
+      case 'join_room':
+        return await handleJoinRoom(supabase, user, req.body, res);
+      case 'leave_room':
+        return await handleLeaveRoom(supabase, user, req.body, res);
+      case 'check_room':
+        return await handleCheckRoom(supabase, user, req.body, res);
       default:
         return res.status(400).json({ error: 'Invalid action' });
     }
@@ -73,11 +70,11 @@ export default async function handler(req, res) {
   }
 }
 
-// Join the matchmaking queue
-async function handleJoinQueue(supabase, user, res) {
+// Create a new PVP room and wait for an opponent
+async function handleCreateRoom(supabase, user, res) {
   const userId = user.id;
 
-  // Get user's PVP rating (default 1000)
+  // Get user's PVP rating and username
   const { data: userData, error: userError } = await supabase
     .from('users')
     .select('pvp_rating, username')
@@ -88,229 +85,261 @@ async function handleJoinQueue(supabase, user, res) {
     return res.status(500).json({ error: 'Failed to fetch user data' });
   }
 
-  const rating = userData?.pvp_rating || 1000;
-
-  // Check if user already has an active match — prevent re-queuing
+  // Check if user already has an active match
   const { data: activeMatch } = await supabase
     .from('pvp_matches')
-    .select('id, player1_id, player2_id, status')
+    .select('id, room_code, status')
     .or(`player1_id.eq.${userId},player2_id.eq.${userId}`)
-    .eq('status', 'active')
+    .in('status', ['active', 'waiting'])
     .maybeSingle();
 
   if (activeMatch) {
+    // Return existing room/match info
     return res.status(409).json({
-      error: 'Already in an active match',
+      error: 'Already in a room or match',
       match_id: activeMatch.id,
-      match: activeMatch
+      room_code: activeMatch.room_code,
+      status: activeMatch.status
     });
   }
 
-  // Upsert into queue: insert or update joined_at if already present.
-  // The unique_user_in_queue constraint ensures one entry per user.
-  const { error: upsertError } = await supabase
-    .from('pvp_matchmaking_queue')
-    .upsert({
-      user_id: userId,
-      rating: rating,
-      username: userData?.username || 'Anon',
-      joined_at: new Date().toISOString()
-    }, { onConflict: 'user_id' });
+  // Generate a short, readable room code (e.g. MASQ-A7B2)
+  const roomCode = generateRoomCode();
 
-  if (upsertError) {
-    console.error('[PVP Matchmaking] Upsert error:', upsertError);
-    return res.status(500).json({ error: 'Failed to join queue' });
-  }
-
-  // Attempt to find and pair with an opponent atomically
-  const match = await attemptMatchPairing(supabase, userId, rating);
-
-  if (match) {
-    return res.status(200).json({ status: 'matched', match });
-  }
-
-  return res.status(200).json({ status: 'queued', message: 'Waiting for opponent...' });
-}
-
-// Leave the matchmaking queue
-async function handleLeaveQueue(supabase, user, res) {
-  await supabase
-    .from('pvp_matchmaking_queue')
-    .delete()
-    .eq('user_id', user.id);
-
-  return res.status(200).json({ status: 'left_queue' });
-}
-
-// Check if a match has been found (READ-ONLY — does NOT create matches)
-// This prevents race conditions from multiple concurrent pairing attempts.
-// Match creation only happens in join_queue.
-async function handleCheckMatch(supabase, user, res) {
-  const userId = user.id;
-
-  // Check for active/waiting match first (highest priority)
-  const { data: activeMatch } = await supabase
+  // Create room as a pvp_matches row with status 'waiting'
+  const { data: room, error: createError } = await supabase
     .from('pvp_matches')
-    .select('id, player1_id, player2_id, status, game_seed')
-    .or(`player1_id.eq.${userId},player2_id.eq.${userId}`)
-    .in('status', ['active', 'waiting'])
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .insert({
+      player1_id: userId,
+      player2_id: null,
+      status: 'waiting',
+      room_code: roomCode,
+      game_seed: generateGameSeed(),
+      turn_number: 0,
+      game_state: createInitialGameState(userData?.username || 'Anon'),
+      created_at: new Date().toISOString()
+    })
+    .select()
+    .single();
 
-  if (activeMatch) {
-    // Clean up queue entry since we have a match
-    await supabase
-      .from('pvp_matchmaking_queue')
-      .delete()
-      .eq('user_id', userId);
-
-    return res.status(200).json({ status: 'matched', match: activeMatch });
+  if (createError) {
+    console.error('[PVP Matchmaking] Room creation error:', createError);
+    return res.status(500).json({ error: 'Failed to create room' });
   }
 
-  // Check if user is still in queue
-  const { data: queueEntry } = await supabase
-    .from('pvp_matchmaking_queue')
-    .select('id, rating, joined_at')
-    .eq('user_id', userId)
-    .maybeSingle();
+  console.log(`[PVP] Room created: ${roomCode} by ${userData?.username || userId}`);
 
-  if (!queueEntry) {
-    // Not in queue and no active match — dropped out
-    return res.status(200).json({ status: 'not_in_queue' });
-  }
-
-  // Check queue timeout
-  const queuedSeconds = (Date.now() - new Date(queueEntry.joined_at).getTime()) / 1000;
-  if (queuedSeconds > MAX_QUEUE_TIME_SECONDS) {
-    // Remove from queue on timeout
-    await supabase
-      .from('pvp_matchmaking_queue')
-      .delete()
-      .eq('user_id', userId);
-
-    return res.status(200).json({ status: 'timeout', message: 'No opponent found' });
-  }
-
-  // Still waiting — return queue time so client can display
-  // NOTE: We do NOT call attemptMatchPairing here. Only join_queue pairs.
-  // This avoids race conditions from multiple concurrent pairing attempts.
   return res.status(200).json({
-    status: 'waiting',
-    queue_time: Math.floor(queuedSeconds)
+    status: 'room_created',
+    room_code: roomCode,
+    match_id: room.id,
+    creator: userData?.username || 'Anon',
+    rating: userData?.pvp_rating || 1000
   });
 }
 
-// Core matchmaking logic: find and claim the closest-rated opponent.
-//
-// Race-condition-safe approach:
-//   1. Find a candidate opponent in the queue via SELECT
-//   2. Atomically DELETE that opponent's queue row (claim them)
-//      - If another request already claimed them, DELETE returns 0 rows → we retry
-//   3. Only after successful claim, create the match and remove ourselves from queue
-async function attemptMatchPairing(supabase, userId, userRating, queuedSeconds = 0) {
-  // Expand rating range over time to reduce wait
-  const ratingRange = Math.min(
-    INITIAL_RATING_RANGE + (queuedSeconds * RATING_RANGE_EXPANSION_PER_SECOND),
-    MAX_RATING_RANGE
-  );
+// List all available rooms (status = 'waiting')
+async function handleListRooms(supabase, user, res) {
+  // Clean up expired rooms first (older than ROOM_EXPIRY_SECONDS)
+  const expiryTime = new Date(Date.now() - ROOM_EXPIRY_SECONDS * 1000).toISOString();
+  await supabase
+    .from('pvp_matches')
+    .update({ status: 'abandoned' })
+    .eq('status', 'waiting')
+    .lt('created_at', expiryTime);
 
-  const minRating = userRating - ratingRange;
-  const maxRating = userRating + ratingRange;
+  // Fetch all waiting rooms
+  const { data: rooms, error } = await supabase
+    .from('pvp_matches')
+    .select('id, room_code, player1_id, game_state, created_at')
+    .eq('status', 'waiting')
+    .order('created_at', { ascending: false })
+    .limit(20);
 
-  // Find candidate opponents in queue (excluding self)
-  const { data: candidates, error } = await supabase
-    .from('pvp_matchmaking_queue')
-    .select('user_id, rating, username')
-    .neq('user_id', userId)
-    .gte('rating', minRating)
-    .lte('rating', maxRating)
-    .order('joined_at', { ascending: true })
-    .limit(5); // Fetch a few candidates in case the first is already claimed
-
-  if (error || !candidates || candidates.length === 0) {
-    return null;
+  if (error) {
+    return res.status(500).json({ error: 'Failed to fetch rooms' });
   }
 
-  // Try to atomically claim an opponent by deleting their queue row.
-  // If another concurrent request already claimed them, the delete
-  // will affect 0 rows and we move to the next candidate.
-  for (const candidate of candidates) {
-    // Atomically delete the opponent from the queue — this is the "lock"
-    const { data: claimed, error: claimError } = await supabase
-      .from('pvp_matchmaking_queue')
-      .delete()
-      .eq('user_id', candidate.user_id)
-      .select();
+  // Format rooms for display (include creator name + rating from game_state)
+  const formattedRooms = rooms.map(room => ({
+    match_id: room.id,
+    room_code: room.room_code,
+    creator_name: room.game_state?.creator_name || 'Anon',
+    creator_rating: room.game_state?.creator_rating || 1000,
+    created_at: room.created_at,
+    is_own: room.player1_id === user.id
+  }));
 
-    if (claimError || !claimed || claimed.length === 0) {
-      // Opponent was already claimed by another request — try next candidate
-      continue;
-    }
+  // Also check if user has an active match or room
+  const { data: userMatch } = await supabase
+    .from('pvp_matches')
+    .select('id, room_code, status, player1_id, player2_id')
+    .or(`player1_id.eq.${user.id},player2_id.eq.${user.id}`)
+    .in('status', ['active', 'waiting'])
+    .maybeSingle();
 
-    // Double-check neither player already has an active match
-    // (guards against edge case where match was created between queue join and now)
-    const { data: existingMatch } = await supabase
-      .from('pvp_matches')
-      .select('id')
-      .or(
-        `and(player1_id.eq.${userId},player2_id.eq.${candidate.user_id}),` +
-        `and(player1_id.eq.${candidate.user_id},player2_id.eq.${userId})`
-      )
-      .eq('status', 'active')
-      .maybeSingle();
+  return res.status(200).json({
+    status: 'ok',
+    rooms: formattedRooms,
+    user_match: userMatch ? {
+      match_id: userMatch.id,
+      room_code: userMatch.room_code,
+      status: userMatch.status,
+      is_creator: userMatch.player1_id === user.id
+    } : null
+  });
+}
 
-    if (existingMatch) {
-      // Match already exists for this pair — don't create a duplicate
-      // Remove ourselves from queue since we have a match
-      await supabase
-        .from('pvp_matchmaking_queue')
-        .delete()
-        .eq('user_id', userId);
-      return existingMatch;
-    }
+// Join an existing room
+async function handleJoinRoom(supabase, user, body, res) {
+  const userId = user.id;
+  const { room_code } = body;
 
-    // Create the match
-    const { data: match, error: matchError } = await supabase
-      .from('pvp_matches')
-      .insert({
-        player1_id: userId,
-        player2_id: candidate.user_id,
-        status: 'active',
-        game_seed: generateGameSeed(),
-        turn_number: 0,
-        game_state: createInitialGameState(),
-        created_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-
-    if (matchError) {
-      console.error('[PVP Matchmaking] Match creation error:', matchError);
-      // Re-insert opponent back into queue since match creation failed
-      await supabase
-        .from('pvp_matchmaking_queue')
-        .insert({
-          user_id: candidate.user_id,
-          rating: candidate.rating,
-          username: candidate.username,
-          joined_at: new Date().toISOString()
-        });
-      return null;
-    }
-
-    // Remove ourselves from queue (opponent was already removed above via DELETE)
-    await supabase
-      .from('pvp_matchmaking_queue')
-      .delete()
-      .eq('user_id', userId);
-
-    console.log(`[PVP Matchmaking] Match created: ${match.id} (${userId} vs ${candidate.user_id})`);
-    return match;
+  if (!room_code) {
+    return res.status(400).json({ error: 'Missing room_code' });
   }
 
-  // No candidate could be claimed
-  return null;
+  // Get joiner's info
+  const { data: userData } = await supabase
+    .from('users')
+    .select('pvp_rating, username')
+    .eq('id', userId)
+    .single();
+
+  // Check if user already has an active match
+  const { data: existingMatch } = await supabase
+    .from('pvp_matches')
+    .select('id, room_code, status')
+    .or(`player1_id.eq.${userId},player2_id.eq.${userId}`)
+    .in('status', ['active', 'waiting'])
+    .maybeSingle();
+
+  if (existingMatch) {
+    return res.status(409).json({
+      error: 'Already in a room or match',
+      match_id: existingMatch.id,
+      room_code: existingMatch.room_code,
+      status: existingMatch.status
+    });
+  }
+
+  // Find the room
+  const { data: room, error: findError } = await supabase
+    .from('pvp_matches')
+    .select('*')
+    .eq('room_code', room_code.toUpperCase())
+    .eq('status', 'waiting')
+    .maybeSingle();
+
+  if (findError || !room) {
+    return res.status(404).json({ error: 'Room not found or already started' });
+  }
+
+  // Can't join your own room
+  if (room.player1_id === userId) {
+    return res.status(400).json({ error: 'Cannot join your own room' });
+  }
+
+  // Atomically update the room: set player2 and change status to 'active'
+  // The eq on status='waiting' prevents double-joins (if already active, 0 rows updated)
+  const { data: updatedMatch, error: joinError } = await supabase
+    .from('pvp_matches')
+    .update({
+      player2_id: userId,
+      status: 'active',
+      game_state: {
+        ...room.game_state,
+        joiner_name: userData?.username || 'Anon',
+        joiner_rating: userData?.pvp_rating || 1000,
+      }
+    })
+    .eq('id', room.id)
+    .eq('status', 'waiting') // Atomic guard: only join if still waiting
+    .select()
+    .single();
+
+  if (joinError || !updatedMatch) {
+    return res.status(409).json({ error: 'Room is no longer available' });
+  }
+
+  console.log(`[PVP] ${userData?.username || userId} joined room ${room_code}`);
+
+  return res.status(200).json({
+    status: 'joined',
+    match_id: updatedMatch.id,
+    room_code: updatedMatch.room_code,
+    match: updatedMatch
+  });
+}
+
+// Leave/delete a room (only the creator, before match starts)
+async function handleLeaveRoom(supabase, user, body, res) {
+  const userId = user.id;
+  const { room_code } = body;
+
+  if (!room_code) {
+    return res.status(400).json({ error: 'Missing room_code' });
+  }
+
+  // Only allow deleting if user is the creator and room is still waiting
+  const { data: deleted, error } = await supabase
+    .from('pvp_matches')
+    .update({ status: 'abandoned' })
+    .eq('room_code', room_code.toUpperCase())
+    .eq('player1_id', userId)
+    .eq('status', 'waiting')
+    .select();
+
+  if (error || !deleted || deleted.length === 0) {
+    return res.status(404).json({ error: 'Room not found or already started' });
+  }
+
+  return res.status(200).json({ status: 'room_closed' });
+}
+
+// Check status of a specific room (for polling by the creator)
+async function handleCheckRoom(supabase, user, body, res) {
+  const { room_code } = body;
+
+  if (!room_code) {
+    return res.status(400).json({ error: 'Missing room_code' });
+  }
+
+  const { data: match, error } = await supabase
+    .from('pvp_matches')
+    .select('id, room_code, status, player1_id, player2_id, game_seed, game_state')
+    .eq('room_code', room_code.toUpperCase())
+    .maybeSingle();
+
+  if (error || !match) {
+    return res.status(404).json({ error: 'Room not found' });
+  }
+
+  // Verify user is in this room
+  const isPlayer1 = match.player1_id === user.id;
+  const isPlayer2 = match.player2_id === user.id;
+  if (!isPlayer1 && !isPlayer2) {
+    return res.status(403).json({ error: 'Not a participant in this room' });
+  }
+
+  return res.status(200).json({
+    status: match.status,
+    match_id: match.id,
+    room_code: match.room_code,
+    match: match.status === 'active' ? match : undefined
+  });
+}
+
+// Generate a short readable room code (e.g. MASQ-A7B2)
+function generateRoomCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No I/O/0/1 to avoid confusion
+  let code = '';
+  const bytes = new Uint8Array(4);
+  crypto.randomFillSync(bytes);
+  for (let i = 0; i < 4; i++) {
+    code += chars[bytes[i] % chars.length];
+  }
+  return `MASQ-${code}`;
 }
 
 // Generate a cryptographically secure seed for fair deck generation
@@ -321,36 +350,28 @@ function generateGameSeed() {
 }
 
 // Create the initial server-authoritative game state
-function createInitialGameState() {
+function createInitialGameState(creatorName, creatorRating) {
   return {
+    creator_name: creatorName || 'Anon',
+    creator_rating: creatorRating || 1000,
     player1: {
-      health: 30,
-      maxHealth: 30,
-      mana: 1,
-      maxMana: 1,
-      deckSize: 35,
-      handSize: 0,
-      queuedCardCount: 0,
-      dotDamage: 0,
-      dotTurns: 0,
-      drawCount: 0,
+      health: 30, maxHealth: 30,
+      mana: 1, maxMana: 1,
+      deckSize: 35, handSize: 0,
+      queuedCardCount: 0, dotDamage: 0, dotTurns: 0, drawCount: 0,
     },
     player2: {
-      health: 30,
-      maxHealth: 30,
-      mana: 1,
-      maxMana: 1,
-      deckSize: 35,
-      handSize: 0,
-      queuedCardCount: 0,
-      dotDamage: 0,
-      dotTurns: 0,
-      drawCount: 0,
+      health: 30, maxHealth: 30,
+      mana: 1, maxMana: 1,
+      deckSize: 35, handSize: 0,
+      queuedCardCount: 0, dotDamage: 0, dotTurns: 0, drawCount: 0,
     },
     turnNumber: 0,
     phase: 'starting',
     turnStartTime: null,
     player1Ready: false,
     player2Ready: false,
+    player1MissedTurns: 0,
+    player2MissedTurns: 0,
   };
 }

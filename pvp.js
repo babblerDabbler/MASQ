@@ -50,6 +50,8 @@ export const pvpState = {
   maxReconnectAttempts: 5,   // Max reconnection attempts before auto-forfeit
   turnEndTime: null,         // When the current turn expires
   lastServerState: null,     // Cache of last received server state
+  missedTurns: 0,            // Consecutive missed turns (no cards queued)
+  MAX_MISSED_TURNS: 3,       // Auto-forfeit after this many missed turns
 };
 
 // ============================================================================
@@ -249,8 +251,25 @@ export function startPvpTurnTimer() {
       updateUI();
 
       if (gameState.turnTimeLeft <= 0) {
-        // Auto-end turn when time expires
+        // Timer expired — auto-end turn
         clearInterval(gameState.turnTimer);
+
+        // Track missed turn (no cards queued = missed)
+        if (gameState.player.queuedCards.length === 0) {
+          pvpState.missedTurns++;
+          log(`Turn missed! (${pvpState.missedTurns}/${pvpState.MAX_MISSED_TURNS})`);
+
+          if (pvpState.missedTurns >= pvpState.MAX_MISSED_TURNS) {
+            log("Too many missed turns — auto-forfeiting!");
+            toast.error("You missed 3 turns in a row. Match forfeited.");
+            pvpForfeit();
+            return;
+          }
+        } else {
+          // Player queued cards this turn — reset missed counter
+          pvpState.missedTurns = 0;
+        }
+
         pvpEndTurn();
       }
 
@@ -291,6 +310,11 @@ function applyDotDamage() {
 // Player ends their turn in PVP
 export async function pvpEndTurn() {
   if (!pvpState.isActive || !pvpState.matchId) return;
+
+  // If player manually ends turn with queued cards, reset missed counter
+  if (gameState.player.queuedCards.length > 0) {
+    pvpState.missedTurns = 0;
+  }
 
   gameState.playerReady = true;
   log("You are ready. Waiting for opponent...");
@@ -643,6 +667,7 @@ export function cleanupPvpMatch() {
   pvpState.opponentName = 'Opponent';
   pvpState.opponentRating = 1000;
   pvpState.lastServerState = null;
+  pvpState.missedTurns = 0;
 
   // Clear PVP mode flag so game.js reverts to AI mode behavior
   gameState.pvpMode = false;

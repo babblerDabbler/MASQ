@@ -162,28 +162,28 @@
             </div>
             <h2 id="welcomeMessage" class="post-login-title">Welcome, Anon</h2>
             <p class="post-login-subtitle">Ready to enter the MASQuerade?</p>
+            <!-- PVP Rating Badge (inline with header) -->
+            <div class="pvp-rating-display" id="pvpRatingDisplay" style="display: none;">
+                <div class="pvp-rating-badge">
+                    <span class="pvp-rank-icon" id="pvpRankIcon"></span>
+                    <span class="pvp-rating-value" id="pvpRatingValue">1000</span>
+                    <span class="pvp-rank-name" id="pvpRankName">Bronze</span>
+                </div>
+            </div>
         </div>
 
         <!-- Stats Grid -->
         <div class="player-stats" id="playerStats" style="display: none;">
-            <div class="stats-header">
-                <span class="stats-icon">⚔️</span>
-                Your Legacy
-                <span class="stats-icon">⚔️</span>
-            </div>
             <div class="stats-grid">
                 <div class="stat-card stat-wins">
-                    <div class="stat-icon">🏆</div>
                     <div class="stat-number" id="postLoginWins">0</div>
                     <div class="stat-label">Victories</div>
                 </div>
                 <div class="stat-card stat-losses">
-                    <div class="stat-icon">💀</div>
                     <div class="stat-number" id="postLoginLosses">0</div>
                     <div class="stat-label">Defeats</div>
                 </div>
                 <div class="stat-card stat-streak">
-                    <div class="stat-icon">🔥</div>
                     <div class="stat-number" id="postLoginStreak">0</div>
                     <div class="stat-label">Win Streak</div>
                 </div>
@@ -208,15 +208,6 @@
             </div>
         </div>
 
-        <!-- PVP Rating Display (shown for logged-in users) -->
-        <div class="pvp-rating-display" id="pvpRatingDisplay" style="display: none;">
-            <div class="pvp-rating-badge">
-                <span class="pvp-rank-icon" id="pvpRankIcon"></span>
-                <span class="pvp-rating-value" id="pvpRatingValue">1000</span>
-                <span class="pvp-rank-name" id="pvpRankName">Bronze</span>
-            </div>
-        </div>
-
         <!-- Action Buttons -->
         <div class="post-login-buttons">
             <button class="post-login-btn play-btn" id="startGameBtn">
@@ -226,7 +217,7 @@
             </button>
             <button class="post-login-btn pvp-btn" id="pvpMatchBtn">
                 <span class="btn-icon">&#9876;</span>
-                <span class="btn-text">PVP MATCH</span>
+                <span class="btn-text">PVP ARENA</span>
                 <span class="btn-glow"></span>
             </button>
             <button class="post-login-btn buy-btn" id="buyPacksBtn">
@@ -358,9 +349,9 @@
 
     <!-- Scripts -->
     <script type="module">
-        import { signUp, login, getUser, playAsGuest, getUserStats, getUserOwnedSets, getUserWallet, getUserPvpRating } from './auth.js';
+        import { signUp, login, getUser, playAsGuest, getUserStats, getUserOwnedSets, getUserWallet } from './auth.js';
         import { initializeGame, gameState } from './game.js';
-        import { startMatchmaking, getPvpRankTier } from './matchmaking.js';
+        import { openPvpLobby, getPvpRankTier, getUserPvpRating } from './matchmaking.js';
 
         function showLoadingScreen(text) {
             const loadingScreen = document.getElementById("loadingScreen");
@@ -499,9 +490,9 @@
             initializeGame();
         });
 
-        // PVP Match handler
+        // PVP Match handler — opens the room lobby
         document.getElementById('pvpMatchBtn').addEventListener('click', function() {
-            startMatchmaking();
+            openPvpLobby();
         });
 
         // Buy packs handler

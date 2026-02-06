@@ -1,27 +1,28 @@
-// matchmaking.js - PVP Matchmaking UI Module
+// matchmaking.js - PVP Room Lobby Module
 //
-// Handles the matchmaking queue UI, polling for match results,
-// and transitioning to PVP gameplay when a match is found.
+// Handles PVP room creation, browsing, and joining.
 //
 // Flow:
-//   1. Player clicks "PVP Match" button
-//   2. Player joins matchmaking queue via server API
-//   3. Client polls server every 2s for match status
-//   4. When matched, transitions to PVP game mode
+//   1. Player clicks "PVP Match" → lobby overlay opens
+//   2. Lobby shows list of available rooms + "Create Room" button
+//   3. Create Room: creates a room, shows room code, polls for opponent
+//   4. Join Room: clicks a room → joins it → match starts for both
+//   5. Lobby auto-refreshes room list every 3 seconds
 
 import { supabase } from './supabaseClient.js';
 import { toast } from './toast.js';
 import { gameState } from './game.js';
-import { initializePvpMatch, pvpState, cleanupPvpMatch } from './pvp.js';
+import { initializePvpMatch } from './pvp.js';
 
 // ============================================================================
-// MATCHMAKING STATE
+// LOBBY STATE
 // ============================================================================
 
-const matchmakingState = {
-  isSearching: false,
-  pollInterval: null,
-  startTime: null,
+const lobbyState = {
+  isOpen: false,
+  refreshInterval: null,
+  checkInterval: null,    // Polls for opponent joining your room
+  currentRoomCode: null,  // Room code if you created a room
   overlay: null,
 };
 
@@ -29,12 +30,9 @@ const matchmakingState = {
 // PUBLIC API
 // ============================================================================
 
-// Start searching for a PVP match
-export async function startMatchmaking() {
-  if (matchmakingState.isSearching) {
-    toast.warning("Already searching for a match!");
-    return;
-  }
+// Open the PVP lobby
+export async function openPvpLobby() {
+  if (lobbyState.isOpen) return;
 
   // Require authenticated user (not guest)
   if (!gameState.userId || gameState.userId.startsWith('guest_')) {
@@ -44,100 +42,135 @@ export async function startMatchmaking() {
 
   const session = await supabase.auth.getSession();
   const token = session.data.session?.access_token;
-
   if (!token) {
     toast.error("Session expired. Please re-login.");
     return;
   }
 
-  matchmakingState.isSearching = true;
-  matchmakingState.startTime = Date.now();
+  lobbyState.isOpen = true;
+  showLobbyOverlay(token);
+  refreshRoomList(token);
 
-  // Show matchmaking overlay
-  showMatchmakingOverlay();
+  // Auto-refresh room list every 3 seconds
+  lobbyState.refreshInterval = setInterval(() => refreshRoomList(token), 3000);
+}
 
+// Close the PVP lobby
+export function closePvpLobby() {
+  lobbyState.isOpen = false;
+  stopPolling();
+  hideLobbyOverlay();
+}
+
+// ============================================================================
+// ROOM ACTIONS
+// ============================================================================
+
+// Create a new room
+async function createRoom(token) {
   try {
-    // Join the queue via server API
     const response = await fetch('/api/pvp/matchmaking', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ action: 'join_queue' })
+      body: JSON.stringify({ action: 'create_room' })
     });
 
     const result = await response.json();
 
-    if (result.status === 'matched') {
-      // Immediately matched!
-      handleMatchFound(result.match, token);
-      return;
-    }
-
     if (result.error) {
-      // Handle "already in active match" case
-      if (response.status === 409 && result.match_id) {
-        toast.info("Reconnecting to active match...");
-        await reconnectToMatch(result.match_id, token);
+      // If already in a room, show it
+      if (response.status === 409 && result.room_code) {
+        lobbyState.currentRoomCode = result.room_code;
+        if (result.status === 'active') {
+          // Already matched — go straight to game
+          toast.info("Reconnecting to active match...");
+          await checkRoomAndStart(token);
+          return;
+        }
+        showWaitingState(result.room_code);
+        startRoomPolling(token, result.room_code);
         return;
       }
-      throw new Error(result.error);
-    }
-
-    // Start polling for match
-    startMatchPolling(token);
-    toast.info("Searching for an opponent...");
-
-  } catch (err) {
-    console.error('[Matchmaking] Error:', err);
-    toast.error("Failed to join matchmaking: " + err.message);
-    cancelMatchmaking();
-  }
-}
-
-// Cancel matchmaking search
-export async function cancelMatchmaking() {
-  if (!matchmakingState.isSearching) return;
-
-  matchmakingState.isSearching = false;
-  stopMatchPolling();
-  hideMatchmakingOverlay();
-
-  try {
-    const session = await supabase.auth.getSession();
-    const token = session.data.session?.access_token;
-
-    if (token) {
-      await fetch('/api/pvp/matchmaking', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ action: 'leave_queue' })
-      });
-    }
-  } catch (err) {
-    console.warn('[Matchmaking] Error leaving queue:', err);
-  }
-
-  toast.info("Matchmaking cancelled");
-}
-
-// ============================================================================
-// MATCH POLLING
-// ============================================================================
-
-function startMatchPolling(token) {
-  stopMatchPolling();
-
-  matchmakingState.pollInterval = setInterval(async () => {
-    if (!matchmakingState.isSearching) {
-      stopMatchPolling();
+      toast.error(result.error);
       return;
     }
 
+    lobbyState.currentRoomCode = result.room_code;
+    showWaitingState(result.room_code);
+    startRoomPolling(token, result.room_code);
+    toast.info(`Room ${result.room_code} created! Waiting for opponent...`);
+
+  } catch (err) {
+    console.error('[Lobby] Create room error:', err);
+    toast.error("Failed to create room: " + err.message);
+  }
+}
+
+// Join an existing room
+async function joinRoom(token, roomCode) {
+  try {
+    const response = await fetch('/api/pvp/matchmaking', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ action: 'join_room', room_code: roomCode })
+    });
+
+    const result = await response.json();
+
+    if (result.error) {
+      toast.error(result.error);
+      refreshRoomList(token); // Refresh in case room is gone
+      return;
+    }
+
+    if (result.status === 'joined') {
+      toast.success("Joined room! Starting match...");
+      closePvpLobby();
+      startMatch(result.match);
+    }
+  } catch (err) {
+    console.error('[Lobby] Join room error:', err);
+    toast.error("Failed to join room: " + err.message);
+  }
+}
+
+// Leave your room (cancel waiting)
+async function leaveRoom(token) {
+  if (!lobbyState.currentRoomCode) return;
+
+  try {
+    await fetch('/api/pvp/matchmaking', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ action: 'leave_room', room_code: lobbyState.currentRoomCode })
+    });
+  } catch (err) {
+    console.warn('[Lobby] Leave room error:', err);
+  }
+
+  lobbyState.currentRoomCode = null;
+  stopRoomPolling();
+  showBrowseState(token);
+  toast.info("Room closed.");
+}
+
+// ============================================================================
+// ROOM POLLING (creator waits for opponent to join)
+// ============================================================================
+
+function startRoomPolling(token, roomCode) {
+  stopRoomPolling();
+
+  lobbyState.checkInterval = setInterval(async () => {
     try {
       const response = await fetch('/api/pvp/matchmaking', {
         method: 'POST',
@@ -145,198 +178,279 @@ function startMatchPolling(token) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ action: 'check_match' })
+        body: JSON.stringify({ action: 'check_room', room_code: roomCode })
       });
 
       const result = await response.json();
 
-      switch (result.status) {
-        case 'matched':
-          handleMatchFound(result.match, token);
-          break;
-
-        case 'waiting':
-          matchmakingState._notInQueueCount = 0;
-          updateQueueTimeDisplay(result.queue_time || 0);
-          break;
-
-        case 'timeout':
-          toast.warning("No opponents found. Try again later.");
-          cancelMatchmaking();
-          break;
-
-        case 'not_in_queue':
-          // Player was removed from queue — this means either:
-          //   a) The opponent's join_queue already paired us (match exists)
-          //   b) Something went wrong and we got dropped
-          // The next poll iteration will catch 'matched' if (a).
-          // If this persists for 2+ cycles, cancel.
-          if (!matchmakingState._notInQueueCount) {
-            matchmakingState._notInQueueCount = 1;
-          } else {
-            matchmakingState._notInQueueCount++;
-          }
-          if (matchmakingState._notInQueueCount >= 3) {
-            matchmakingState._notInQueueCount = 0;
-            toast.warning("Lost queue position. Please try again.");
-            cancelMatchmaking();
-          }
-          break;
+      if (result.status === 'active' && result.match) {
+        // Opponent joined! Start the match
+        stopRoomPolling();
+        closePvpLobby();
+        toast.success("Opponent joined! Starting match...");
+        startMatch(result.match);
+      } else if (result.status === 'abandoned') {
+        stopRoomPolling();
+        lobbyState.currentRoomCode = null;
+        showBrowseState(token);
+        toast.warning("Room expired.");
       }
     } catch (err) {
-      console.warn('[Matchmaking] Poll error:', err);
-      // Don't cancel on transient errors
+      console.warn('[Lobby] Room poll error:', err);
     }
-  }, 2000); // Poll every 2 seconds
+  }, 2000);
 }
 
-function stopMatchPolling() {
-  if (matchmakingState.pollInterval) {
-    clearInterval(matchmakingState.pollInterval);
-    matchmakingState.pollInterval = null;
+function stopRoomPolling() {
+  if (lobbyState.checkInterval) {
+    clearInterval(lobbyState.checkInterval);
+    lobbyState.checkInterval = null;
+  }
+}
+
+function stopPolling() {
+  stopRoomPolling();
+  if (lobbyState.refreshInterval) {
+    clearInterval(lobbyState.refreshInterval);
+    lobbyState.refreshInterval = null;
+  }
+}
+
+// Check room status and start match if active
+async function checkRoomAndStart(token) {
+  try {
+    const response = await fetch('/api/pvp/matchmaking', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ action: 'check_room', room_code: lobbyState.currentRoomCode })
+    });
+    const result = await response.json();
+    if (result.status === 'active' && result.match) {
+      closePvpLobby();
+      startMatch(result.match);
+    }
+  } catch (err) {
+    console.error('[Lobby] Check room error:', err);
   }
 }
 
 // ============================================================================
-// MATCH FOUND
+// MATCH TRANSITION
 // ============================================================================
 
-async function handleMatchFound(matchData, token) {
-  console.log('[Matchmaking] Match found!', matchData);
-  matchmakingState.isSearching = false;
-  stopMatchPolling();
-  hideMatchmakingOverlay();
-
-  toast.success("Match found! Preparing game...");
-
-  // Determine player role
+async function startMatch(matchData) {
   const isPlayer1 = matchData.player1_id === gameState.userId;
 
-  // Transition to game view
+  // Switch from post-login to game view
   document.getElementById("postLogin").style.display = "none";
   document.getElementById("gameUI").style.display = "block";
   document.getElementById("gameCanvas").style.display = "block";
   document.getElementById("header").style.display = "none";
   window.history.pushState({}, '', '/pvp');
 
-  // Initialize PVP match
   await initializePvpMatch({
     ...matchData,
     is_player1: isPlayer1
   });
 }
 
-// Reconnect to an existing active match
-async function reconnectToMatch(matchId, token) {
-  hideMatchmakingOverlay();
-  matchmakingState.isSearching = false;
-  stopMatchPolling();
+// ============================================================================
+// ROOM LIST REFRESH
+// ============================================================================
+
+async function refreshRoomList(token) {
+  if (!lobbyState.isOpen) return;
 
   try {
-    const response = await fetch('/api/pvp/match-action', {
+    const response = await fetch('/api/pvp/matchmaking', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({
-        action: 'get_state',
-        match_id: matchId
-      })
+      body: JSON.stringify({ action: 'list_rooms' })
     });
 
     const result = await response.json();
 
-    if (result.match_id) {
-      // Transition to game view
-      document.getElementById("postLogin").style.display = "none";
-      document.getElementById("gameUI").style.display = "block";
-      document.getElementById("gameCanvas").style.display = "block";
-      document.getElementById("header").style.display = "none";
-
-      await initializePvpMatch({
-        id: matchId,
-        ...result
-      });
+    if (result.user_match && result.user_match.status === 'active') {
+      // User already has an active match — redirect to it
+      closePvpLobby();
+      toast.info("Reconnecting to active match...");
+      lobbyState.currentRoomCode = result.user_match.room_code;
+      await checkRoomAndStart(token);
+      return;
     }
+
+    renderRoomList(result.rooms || [], token);
   } catch (err) {
-    console.error('[Matchmaking] Reconnect error:', err);
-    toast.error("Failed to reconnect to match.");
+    console.warn('[Lobby] Refresh error:', err);
   }
 }
 
 // ============================================================================
-// UI: MATCHMAKING OVERLAY
+// UI: LOBBY OVERLAY
 // ============================================================================
 
-function showMatchmakingOverlay() {
-  // Remove existing overlay
-  hideMatchmakingOverlay();
+function showLobbyOverlay(token) {
+  hideLobbyOverlay();
 
   const overlay = document.createElement('div');
-  overlay.id = 'matchmakingOverlay';
-  overlay.className = 'matchmaking-overlay';
+  overlay.id = 'pvpLobbyOverlay';
+  overlay.className = 'pvp-lobby-overlay';
 
   overlay.innerHTML = `
-    <div class="matchmaking-content">
-      <div class="matchmaking-spinner"></div>
-      <h2 class="matchmaking-title">Searching for Opponent</h2>
-      <p class="matchmaking-time" id="matchmakingTime">0:00</p>
-      <p class="matchmaking-status" id="matchmakingStatus">Entering the queue...</p>
-      <button class="matchmaking-cancel-btn" id="matchmakingCancelBtn">Cancel</button>
+    <div class="pvp-lobby-content">
+      <div class="pvp-lobby-header">
+        <h2 class="pvp-lobby-title">PVP Arena</h2>
+        <button class="pvp-lobby-close-btn" id="lobbyCloseBtn">&times;</button>
+      </div>
+      <div class="pvp-lobby-body">
+        <div class="pvp-lobby-actions">
+          <button class="pvp-create-room-btn" id="createRoomBtn">Create Room</button>
+        </div>
+        <div class="pvp-lobby-rooms" id="lobbyRoomList">
+          <div class="pvp-lobby-loading">Loading rooms...</div>
+        </div>
+      </div>
     </div>
   `;
 
   document.body.appendChild(overlay);
-  matchmakingState.overlay = overlay;
+  lobbyState.overlay = overlay;
 
-  // Cancel button handler
-  document.getElementById('matchmakingCancelBtn').addEventListener('click', () => {
-    cancelMatchmaking();
-  });
-
-  // Start time display update
-  updateQueueTimeDisplay(0);
+  document.getElementById('lobbyCloseBtn').addEventListener('click', () => closePvpLobby());
+  document.getElementById('createRoomBtn').addEventListener('click', () => createRoom(token));
 }
 
-function hideMatchmakingOverlay() {
-  const overlay = document.getElementById('matchmakingOverlay');
+function hideLobbyOverlay() {
+  const overlay = document.getElementById('pvpLobbyOverlay');
   if (overlay) {
     overlay.classList.add('fade-out');
     setTimeout(() => {
-      if (overlay.parentNode) {
-        overlay.parentNode.removeChild(overlay);
-      }
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
     }, 300);
   }
-  matchmakingState.overlay = null;
+  lobbyState.overlay = null;
 }
 
-function updateQueueTimeDisplay(queueTimeSeconds) {
-  const timeDisplay = document.getElementById('matchmakingTime');
-  const statusDisplay = document.getElementById('matchmakingStatus');
+// Show "waiting for opponent" state within the lobby
+function showWaitingState(roomCode) {
+  const body = document.querySelector('.pvp-lobby-body');
+  if (!body) return;
 
-  if (timeDisplay) {
-    const elapsed = queueTimeSeconds || Math.floor((Date.now() - (matchmakingState.startTime || Date.now())) / 1000);
-    const minutes = Math.floor(elapsed / 60);
-    const seconds = elapsed % 60;
-    timeDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  body.innerHTML = `
+    <div class="pvp-waiting-room">
+      <div class="pvp-room-code-display">
+        <span class="pvp-room-code-label">Room Code</span>
+        <span class="pvp-room-code-value">${roomCode}</span>
+      </div>
+      <div class="pvp-waiting-spinner"></div>
+      <p class="pvp-waiting-text">Waiting for opponent to join...</p>
+      <button class="pvp-cancel-room-btn" id="cancelRoomBtn">Cancel Room</button>
+    </div>
+  `;
+
+  document.getElementById('cancelRoomBtn').addEventListener('click', async () => {
+    const session = await supabase.auth.getSession();
+    const token = session.data.session?.access_token;
+    if (token) leaveRoom(token);
+  });
+}
+
+// Show "browse rooms" state (back from waiting)
+async function showBrowseState(token) {
+  const body = document.querySelector('.pvp-lobby-body');
+  if (!body) return;
+
+  body.innerHTML = `
+    <div class="pvp-lobby-actions">
+      <button class="pvp-create-room-btn" id="createRoomBtn">Create Room</button>
+    </div>
+    <div class="pvp-lobby-rooms" id="lobbyRoomList">
+      <div class="pvp-lobby-loading">Loading rooms...</div>
+    </div>
+  `;
+
+  document.getElementById('createRoomBtn').addEventListener('click', () => createRoom(token));
+  refreshRoomList(token);
+}
+
+// Render the room list in the lobby
+function renderRoomList(rooms, token) {
+  const container = document.getElementById('lobbyRoomList');
+  if (!container) return;
+
+  if (rooms.length === 0) {
+    container.innerHTML = `
+      <div class="pvp-lobby-empty">
+        <p>No rooms available</p>
+        <p class="pvp-lobby-empty-hint">Create a room and wait for an opponent!</p>
+      </div>
+    `;
+    return;
   }
 
-  if (statusDisplay) {
-    if (queueTimeSeconds > 30) {
-      statusDisplay.textContent = "Expanding search range...";
-    } else if (queueTimeSeconds > 10) {
-      statusDisplay.textContent = "Looking for a worthy opponent...";
-    } else {
-      statusDisplay.textContent = "Entering the queue...";
-    }
-  }
+  container.innerHTML = rooms.map(room => {
+    const timeAgo = getTimeAgo(room.created_at);
+    const tier = getPvpRankTier(room.creator_rating);
+
+    return `
+      <div class="pvp-room-card ${room.is_own ? 'pvp-room-own' : ''}" data-room-code="${room.room_code}">
+        <div class="pvp-room-info">
+          <span class="pvp-room-code">${room.room_code}</span>
+          <span class="pvp-room-creator">${escapeHtml(room.creator_name)}</span>
+        </div>
+        <div class="pvp-room-meta">
+          <span class="pvp-room-rating" style="color:${tier.color}">${tier.icon} ${room.creator_rating}</span>
+          <span class="pvp-room-time">${timeAgo}</span>
+        </div>
+        ${room.is_own
+          ? '<span class="pvp-room-yours">Your Room</span>'
+          : `<button class="pvp-join-btn" data-code="${room.room_code}">Join</button>`
+        }
+      </div>
+    `;
+  }).join('');
+
+  // Attach join handlers
+  container.querySelectorAll('.pvp-join-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const code = e.target.getAttribute('data-code');
+      joinRoom(token, code);
+    });
+  });
 }
 
 // ============================================================================
-// PVP RATING DISPLAY
+// HELPERS
 // ============================================================================
+
+function getTimeAgo(dateString) {
+  const seconds = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000);
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}m ago`;
+}
+
+// XSS-safe string escaping for display
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// Get PVP rank tier based on rating
+export function getPvpRankTier(rating) {
+  if (rating >= 2000) return { name: 'MASQ Legend', color: '#FFD700', icon: '👑' };
+  if (rating >= 1600) return { name: 'Diamond', color: '#B9F2FF', icon: '💎' };
+  if (rating >= 1400) return { name: 'Gold', color: '#FFD700', icon: '🥇' };
+  if (rating >= 1200) return { name: 'Silver', color: '#C0C0C0', icon: '🥈' };
+  return { name: 'Bronze', color: '#CD7F32', icon: '🥉' };
+}
 
 // Get and display user's PVP rating
 export async function getUserPvpRating(userId) {
@@ -350,13 +464,4 @@ export async function getUserPvpRating(userId) {
 
   if (error || !data) return 1000;
   return data.pvp_rating || 1000;
-}
-
-// Get PVP rank tier based on rating
-export function getPvpRankTier(rating) {
-  if (rating >= 2000) return { name: 'MASQ Legend', color: '#FFD700', icon: '👑' };
-  if (rating >= 1600) return { name: 'Diamond', color: '#B9F2FF', icon: '💎' };
-  if (rating >= 1400) return { name: 'Gold', color: '#FFD700', icon: '🥇' };
-  if (rating >= 1200) return { name: 'Silver', color: '#C0C0C0', icon: '🥈' };
-  return { name: 'Bronze', color: '#CD7F32', icon: '🥉' };
 }
