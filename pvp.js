@@ -467,34 +467,46 @@ function prepareOpponentCards(cardIds) {
   updateBoard();
 }
 
-// Post-resolution: sync state to server and check for game over
+// Post-resolution: P1 syncs authoritative state to server, P2 fetches and corrects
 async function pvpPostResolution() {
   if (!pvpState.isActive) return;
 
-  // Check for game over locally
-  if (gameState.player.health <= 0 || gameState.opponent.health <= 0) {
-    const playerWon = gameState.opponent.health <= 0 && gameState.player.health > 0;
-    // Both dead = draw, treat as loss for simplicity
-    await reportPvpGameOver(playerWon);
-    return;
-  }
-
-  // Sync state to server (only player1 syncs to avoid conflicts)
   if (pvpState.isPlayer1) {
+    // P1's resolution is AUTHORITATIVE — sync to server first
     await syncStateToServer();
+
+    // Then check game over with P1's canonical state
+    if (gameState.player.health <= 0 || gameState.opponent.health <= 0) {
+      const playerWon = gameState.opponent.health <= 0 && gameState.player.health > 0;
+      await reportPvpGameOver(playerWon);
+      return;
+    }
+  } else {
+    // P2 fetches P1's authoritative state and corrects local values
+    // Wait for P1's sync to reach the server
+    await new Promise(r => setTimeout(r, 2000));
+    await fetchAndApplyAuthoritativeState();
+
+    // Check game over with corrected (authoritative) state
+    if (gameState.player.health <= 0 || gameState.opponent.health <= 0) {
+      const playerWon = gameState.opponent.health <= 0 && gameState.player.health > 0;
+      await reportPvpGameOver(playerWon);
+      return;
+    }
   }
 
   // Reset resolution guard for next turn
   isResolving = false;
 }
 
-// Sync updated game state back to server after resolution
+// P1 syncs authoritative game state to server after resolution
 async function syncStateToServer() {
   try {
     const session = await supabase.auth.getSession();
     const token = session.data.session?.access_token;
     if (!token) return;
 
+    // P1 sends BOTH players' state (P1's resolution is canonical)
     await fetch('/api/pvp/match-action', {
       method: 'POST',
       headers: {
@@ -506,26 +518,94 @@ async function syncStateToServer() {
         match_id: pvpState.matchId,
         payload: {
           player1: {
-            health: pvpState.isPlayer1 ? gameState.player.health : gameState.opponent.health,
-            maxHealth: pvpState.isPlayer1 ? gameState.player.maxHealth : gameState.opponent.maxHealth,
-            mana: pvpState.isPlayer1 ? gameState.player.mana : gameState.opponent.mana,
-            maxMana: pvpState.isPlayer1 ? gameState.player.maxMana : gameState.opponent.maxMana,
-            handSize: pvpState.isPlayer1 ? gameState.player.hand.length : gameState.opponent.hand.length,
-            deckSize: pvpState.isPlayer1 ? gameState.player.deck.length : gameState.opponent.deck.length,
+            health: gameState.player.health,
+            maxHealth: gameState.player.maxHealth,
+            mana: gameState.player.mana,
+            maxMana: gameState.player.maxMana,
+            handSize: gameState.player.hand.length,
+            deckSize: gameState.player.deck.length,
           },
           player2: {
-            health: pvpState.isPlayer1 ? gameState.opponent.health : gameState.player.health,
-            maxHealth: pvpState.isPlayer1 ? gameState.opponent.maxHealth : gameState.player.maxHealth,
-            mana: pvpState.isPlayer1 ? gameState.opponent.mana : gameState.player.mana,
-            maxMana: pvpState.isPlayer1 ? gameState.opponent.maxMana : gameState.player.maxMana,
-            handSize: pvpState.isPlayer1 ? gameState.opponent.hand.length : gameState.player.hand.length,
-            deckSize: pvpState.isPlayer1 ? gameState.opponent.deck.length : gameState.player.deck.length,
+            health: gameState.opponent.health,
+            maxHealth: gameState.opponent.maxHealth,
+            mana: gameState.opponent.mana,
+            maxMana: gameState.opponent.maxMana,
+            handSize: gameState.opponent.hand.length,
+            deckSize: gameState.opponent.deck.length,
           }
         }
       })
     });
+    console.log('[PVP] P1 synced authoritative state to server');
   } catch (err) {
     console.warn('[PVP] State sync error:', err);
+  }
+}
+
+// P2 fetches P1's authoritative state and corrects local values
+async function fetchAndApplyAuthoritativeState() {
+  const MAX_RETRIES = 3;
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      if (!token) return;
+
+      const response = await fetch('/api/pvp/match-action', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: 'get_state',
+          match_id: pvpState.matchId
+        })
+      });
+
+      const result = await response.json();
+      if (!result || result.status === 'finished') return;
+
+      // If P1 hasn't synced yet (still in resolution phase), retry
+      if (result.phase === 'resolution' && attempt < MAX_RETRIES - 1) {
+        console.log('[PVP] P1 sync not ready yet, retrying...');
+        await new Promise(r => setTimeout(r, 1000));
+        continue;
+      }
+
+      // Apply authoritative values from P1's resolution
+      // get_state returns 'player' = P2's data, 'opponent' = P1's data (relative to requester)
+      if (result.player?.health !== undefined) {
+        const oldHealth = gameState.player.health;
+        gameState.player.health = result.player.health;
+        gameState.player.maxHealth = result.player.maxHealth ?? gameState.player.maxHealth;
+        gameState.player.mana = result.player.mana ?? gameState.player.mana;
+        gameState.player.maxMana = result.player.maxMana ?? gameState.player.maxMana;
+        if (oldHealth !== result.player.health) {
+          console.log(`[PVP] Corrected player health: ${oldHealth} → ${result.player.health}`);
+        }
+      }
+      if (result.opponent?.health !== undefined) {
+        const oldHealth = gameState.opponent.health;
+        gameState.opponent.health = result.opponent.health;
+        gameState.opponent.maxHealth = result.opponent.maxHealth ?? gameState.opponent.maxHealth;
+        gameState.opponent.mana = result.opponent.mana ?? gameState.opponent.mana;
+        gameState.opponent.maxMana = result.opponent.maxMana ?? gameState.opponent.maxMana;
+        if (oldHealth !== result.opponent.health) {
+          console.log(`[PVP] Corrected opponent health: ${oldHealth} → ${result.opponent.health}`);
+        }
+      }
+
+      updateUI();
+      console.log('[PVP] Applied authoritative state from server');
+      return;
+    } catch (err) {
+      console.warn('[PVP] Authoritative state fetch error:', err);
+      if (attempt < MAX_RETRIES - 1) {
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
   }
 }
 
