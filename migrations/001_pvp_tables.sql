@@ -54,6 +54,13 @@ CREATE INDEX IF NOT EXISTS idx_matches_player2 ON public.pvp_matches (player2_id
 CREATE INDEX IF NOT EXISTS idx_matches_status ON public.pvp_matches (status);
 CREATE INDEX IF NOT EXISTS idx_matches_created_at ON public.pvp_matches (created_at DESC);
 
+-- Partial unique index: prevent duplicate active matches between the same pair.
+-- Uses LEAST/GREATEST so (A,B) and (B,A) are treated as the same pair.
+-- Only enforced for 'active' matches — finished/abandoned matches are not constrained.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_active_match_pair
+  ON public.pvp_matches (LEAST(player1_id, player2_id), GREATEST(player1_id, player2_id))
+  WHERE status = 'active';
+
 -- 4. Enable Row Level Security (RLS) on new tables
 ALTER TABLE public.pvp_matchmaking_queue ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pvp_matches ENABLE ROW LEVEL SECURITY;

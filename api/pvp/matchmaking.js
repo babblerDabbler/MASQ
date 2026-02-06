@@ -4,6 +4,12 @@
 //
 // Security: All operations are authenticated via Supabase JWT.
 // The server validates the user's identity before any matchmaking action.
+//
+// Race condition prevention:
+//   - Only join_queue triggers match pairing (check_match is read-only)
+//   - Opponent is claimed via DELETE...RETURNING (atomic removal from queue)
+//   - If two requests race to claim the same opponent, only one DELETE succeeds
+//   - Active match check before pairing prevents duplicate matches
 
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
@@ -84,49 +90,39 @@ async function handleJoinQueue(supabase, user, res) {
 
   const rating = userData?.pvp_rating || 1000;
 
-  // Check if user already has an active match
+  // Check if user already has an active match — prevent re-queuing
   const { data: activeMatch } = await supabase
     .from('pvp_matches')
-    .select('id')
+    .select('id, player1_id, player2_id, status')
     .or(`player1_id.eq.${userId},player2_id.eq.${userId}`)
     .eq('status', 'active')
     .maybeSingle();
 
   if (activeMatch) {
-    return res.status(409).json({ error: 'Already in an active match', match_id: activeMatch.id });
+    return res.status(409).json({
+      error: 'Already in an active match',
+      match_id: activeMatch.id,
+      match: activeMatch
+    });
   }
 
-  // Check if already in queue
-  const { data: existingEntry } = await supabase
+  // Upsert into queue: insert or update joined_at if already present.
+  // The unique_user_in_queue constraint ensures one entry per user.
+  const { error: upsertError } = await supabase
     .from('pvp_matchmaking_queue')
-    .select('id')
-    .eq('user_id', userId)
-    .maybeSingle();
+    .upsert({
+      user_id: userId,
+      rating: rating,
+      username: userData?.username || 'Anon',
+      joined_at: new Date().toISOString()
+    }, { onConflict: 'user_id' });
 
-  if (existingEntry) {
-    // Update joined_at to refresh queue position
-    await supabase
-      .from('pvp_matchmaking_queue')
-      .update({ joined_at: new Date().toISOString() })
-      .eq('user_id', userId);
-  } else {
-    // Insert into queue
-    const { error: insertError } = await supabase
-      .from('pvp_matchmaking_queue')
-      .insert({
-        user_id: userId,
-        rating: rating,
-        username: userData?.username || 'Anon',
-        joined_at: new Date().toISOString()
-      });
-
-    if (insertError) {
-      console.error('[PVP Matchmaking] Insert error:', insertError);
-      return res.status(500).json({ error: 'Failed to join queue' });
-    }
+  if (upsertError) {
+    console.error('[PVP Matchmaking] Upsert error:', upsertError);
+    return res.status(500).json({ error: 'Failed to join queue' });
   }
 
-  // Attempt to find a match
+  // Attempt to find and pair with an opponent atomically
   const match = await attemptMatchPairing(supabase, userId, rating);
 
   if (match) {
@@ -146,21 +142,16 @@ async function handleLeaveQueue(supabase, user, res) {
   return res.status(200).json({ status: 'left_queue' });
 }
 
-// Check if a match has been found
+// Check if a match has been found (READ-ONLY — does NOT create matches)
+// This prevents race conditions from multiple concurrent pairing attempts.
+// Match creation only happens in join_queue.
 async function handleCheckMatch(supabase, user, res) {
   const userId = user.id;
 
-  // Check if user is still in queue
-  const { data: queueEntry } = await supabase
-    .from('pvp_matchmaking_queue')
-    .select('id, rating, joined_at')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  // Check for active match
+  // Check for active/waiting match first (highest priority)
   const { data: activeMatch } = await supabase
     .from('pvp_matches')
-    .select('id, player1_id, player2_id, status')
+    .select('id, player1_id, player2_id, status, game_seed')
     .or(`player1_id.eq.${userId},player2_id.eq.${userId}`)
     .in('status', ['active', 'waiting'])
     .order('created_at', { ascending: false })
@@ -168,7 +159,7 @@ async function handleCheckMatch(supabase, user, res) {
     .maybeSingle();
 
   if (activeMatch) {
-    // Remove from queue if match found
+    // Clean up queue entry since we have a match
     await supabase
       .from('pvp_matchmaking_queue')
       .delete()
@@ -177,7 +168,15 @@ async function handleCheckMatch(supabase, user, res) {
     return res.status(200).json({ status: 'matched', match: activeMatch });
   }
 
+  // Check if user is still in queue
+  const { data: queueEntry } = await supabase
+    .from('pvp_matchmaking_queue')
+    .select('id, rating, joined_at')
+    .eq('user_id', userId)
+    .maybeSingle();
+
   if (!queueEntry) {
+    // Not in queue and no active match — dropped out
     return res.status(200).json({ status: 'not_in_queue' });
   }
 
@@ -193,20 +192,22 @@ async function handleCheckMatch(supabase, user, res) {
     return res.status(200).json({ status: 'timeout', message: 'No opponent found' });
   }
 
-  // Try to find a match with expanding rating range
-  const match = await attemptMatchPairing(supabase, userId, queueEntry.rating, queuedSeconds);
-
-  if (match) {
-    return res.status(200).json({ status: 'matched', match });
-  }
-
+  // Still waiting — return queue time so client can display
+  // NOTE: We do NOT call attemptMatchPairing here. Only join_queue pairs.
+  // This avoids race conditions from multiple concurrent pairing attempts.
   return res.status(200).json({
     status: 'waiting',
     queue_time: Math.floor(queuedSeconds)
   });
 }
 
-// Core matchmaking logic: find closest-rated opponent in queue
+// Core matchmaking logic: find and claim the closest-rated opponent.
+//
+// Race-condition-safe approach:
+//   1. Find a candidate opponent in the queue via SELECT
+//   2. Atomically DELETE that opponent's queue row (claim them)
+//      - If another request already claimed them, DELETE returns 0 rows → we retry
+//   3. Only after successful claim, create the match and remove ourselves from queue
 async function attemptMatchPairing(supabase, userId, userRating, queuedSeconds = 0) {
   // Expand rating range over time to reduce wait
   const ratingRange = Math.min(
@@ -217,7 +218,7 @@ async function attemptMatchPairing(supabase, userId, userRating, queuedSeconds =
   const minRating = userRating - ratingRange;
   const maxRating = userRating + ratingRange;
 
-  // Find closest opponent in queue (excluding self)
+  // Find candidate opponents in queue (excluding self)
   const { data: candidates, error } = await supabase
     .from('pvp_matchmaking_queue')
     .select('user_id, rating, username')
@@ -225,46 +226,94 @@ async function attemptMatchPairing(supabase, userId, userRating, queuedSeconds =
     .gte('rating', minRating)
     .lte('rating', maxRating)
     .order('joined_at', { ascending: true })
-    .limit(1);
+    .limit(5); // Fetch a few candidates in case the first is already claimed
 
   if (error || !candidates || candidates.length === 0) {
     return null;
   }
 
-  const opponent = candidates[0];
+  // Try to atomically claim an opponent by deleting their queue row.
+  // If another concurrent request already claimed them, the delete
+  // will affect 0 rows and we move to the next candidate.
+  for (const candidate of candidates) {
+    // Atomically delete the opponent from the queue — this is the "lock"
+    const { data: claimed, error: claimError } = await supabase
+      .from('pvp_matchmaking_queue')
+      .delete()
+      .eq('user_id', candidate.user_id)
+      .select();
 
-  // Create match (use a transaction-like approach: create match then remove both from queue)
-  const { data: match, error: matchError } = await supabase
-    .from('pvp_matches')
-    .insert({
-      player1_id: userId,
-      player2_id: opponent.user_id,
-      status: 'active',
-      // Server generates shared seed for deck creation (both players get same weighted pool)
-      game_seed: generateGameSeed(),
-      turn_number: 0,
-      // Initialize game state server-side
-      game_state: createInitialGameState(),
-      created_at: new Date().toISOString()
-    })
-    .select()
-    .single();
+    if (claimError || !claimed || claimed.length === 0) {
+      // Opponent was already claimed by another request — try next candidate
+      continue;
+    }
 
-  if (matchError) {
-    console.error('[PVP Matchmaking] Match creation error:', matchError);
-    return null;
+    // Double-check neither player already has an active match
+    // (guards against edge case where match was created between queue join and now)
+    const { data: existingMatch } = await supabase
+      .from('pvp_matches')
+      .select('id')
+      .or(
+        `and(player1_id.eq.${userId},player2_id.eq.${candidate.user_id}),` +
+        `and(player1_id.eq.${candidate.user_id},player2_id.eq.${userId})`
+      )
+      .eq('status', 'active')
+      .maybeSingle();
+
+    if (existingMatch) {
+      // Match already exists for this pair — don't create a duplicate
+      // Remove ourselves from queue since we have a match
+      await supabase
+        .from('pvp_matchmaking_queue')
+        .delete()
+        .eq('user_id', userId);
+      return existingMatch;
+    }
+
+    // Create the match
+    const { data: match, error: matchError } = await supabase
+      .from('pvp_matches')
+      .insert({
+        player1_id: userId,
+        player2_id: candidate.user_id,
+        status: 'active',
+        game_seed: generateGameSeed(),
+        turn_number: 0,
+        game_state: createInitialGameState(),
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (matchError) {
+      console.error('[PVP Matchmaking] Match creation error:', matchError);
+      // Re-insert opponent back into queue since match creation failed
+      await supabase
+        .from('pvp_matchmaking_queue')
+        .insert({
+          user_id: candidate.user_id,
+          rating: candidate.rating,
+          username: candidate.username,
+          joined_at: new Date().toISOString()
+        });
+      return null;
+    }
+
+    // Remove ourselves from queue (opponent was already removed above via DELETE)
+    await supabase
+      .from('pvp_matchmaking_queue')
+      .delete()
+      .eq('user_id', userId);
+
+    console.log(`[PVP Matchmaking] Match created: ${match.id} (${userId} vs ${candidate.user_id})`);
+    return match;
   }
 
-  // Remove both players from queue
-  await supabase
-    .from('pvp_matchmaking_queue')
-    .delete()
-    .in('user_id', [userId, opponent.user_id]);
-
-  return match;
+  // No candidate could be claimed
+  return null;
 }
 
-// Generate a deterministic seed for fair deck generation
+// Generate a cryptographically secure seed for fair deck generation
 function generateGameSeed() {
   const bytes = new Uint8Array(16);
   crypto.randomFillSync(bytes);
@@ -299,7 +348,7 @@ function createInitialGameState() {
       drawCount: 0,
     },
     turnNumber: 0,
-    phase: 'starting', // starting -> selection -> resolution -> next_turn
+    phase: 'starting',
     turnStartTime: null,
     player1Ready: false,
     player2Ready: false,

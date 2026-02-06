@@ -156,7 +156,7 @@ function startMatchPolling(token) {
           break;
 
         case 'waiting':
-          // Update queue time display
+          matchmakingState._notInQueueCount = 0;
           updateQueueTimeDisplay(result.queue_time || 0);
           break;
 
@@ -166,20 +166,19 @@ function startMatchPolling(token) {
           break;
 
         case 'not_in_queue':
-          // Player was removed from queue (possibly matched elsewhere)
-          // Check for active match
-          const stateResponse = await fetch('/api/pvp/matchmaking', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ action: 'check_match' })
-          });
-          const stateResult = await stateResponse.json();
-          if (stateResult.status === 'matched') {
-            handleMatchFound(stateResult.match, token);
+          // Player was removed from queue — this means either:
+          //   a) The opponent's join_queue already paired us (match exists)
+          //   b) Something went wrong and we got dropped
+          // The next poll iteration will catch 'matched' if (a).
+          // If this persists for 2+ cycles, cancel.
+          if (!matchmakingState._notInQueueCount) {
+            matchmakingState._notInQueueCount = 1;
           } else {
+            matchmakingState._notInQueueCount++;
+          }
+          if (matchmakingState._notInQueueCount >= 3) {
+            matchmakingState._notInQueueCount = 0;
+            toast.warning("Lost queue position. Please try again.");
             cancelMatchmaking();
           }
           break;
