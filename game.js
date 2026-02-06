@@ -1074,11 +1074,9 @@ export async function checkGameOver() {
   if (gameState.player.health <= 0) {
     log("Opponent wins!");
 
-    // In PVP mode, notify server of match result and handle via PVP module
+    // In PVP mode, game over is handled by pvpPostResolution()
+    // Just return true to stop the turn loop — PVP module handles the rest
     if (gameState.pvpMode) {
-      const { pvpState } = await import('./pvp.js');
-      // Server handles stats/ELO updates for PVP
-      // The match end will be broadcast via Realtime
       return true;
     }
 
@@ -1102,10 +1100,8 @@ export async function checkGameOver() {
   } else if (gameState.opponent.health <= 0) {
     log("You win!");
 
-    // In PVP mode, notify server of match result and handle via PVP module
+    // In PVP mode, game over is handled by pvpPostResolution()
     if (gameState.pvpMode) {
-      const { pvpState } = await import('./pvp.js');
-      // Server handles stats/ELO updates for PVP
       return true;
     }
 

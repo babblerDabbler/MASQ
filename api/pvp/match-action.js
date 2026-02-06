@@ -71,6 +71,10 @@ export default async function handler(req, res) {
         return await handleForfeit(supabase, user, match_id, res);
       case 'get_state':
         return await handleGetState(supabase, user, match_id, res);
+      case 'sync_state':
+        return await handleSyncState(supabase, user, match_id, payload, res);
+      case 'report_game_over':
+        return await handleReportGameOver(supabase, user, match_id, payload, res);
       default:
         return res.status(400).json({ error: 'Invalid action' });
     }
@@ -104,6 +108,10 @@ async function handleGetState(supabase, user, matchId, res) {
   const playerKey = isPlayer1 ? 'player1' : 'player2';
   const opponentKey = isPlayer1 ? 'player2' : 'player1';
 
+  // Include opponent's queued card IDs when both players are ready (resolution phase)
+  const bothReady = state.player1Ready && state.player2Ready;
+  const opponentCardIds = bothReady ? (state[opponentKey]?.queuedCardIds || []) : undefined;
+
   return res.status(200).json({
     match_id: match.id,
     status: match.status,
@@ -125,6 +133,7 @@ async function handleGetState(supabase, user, matchId, res) {
     phase: state.phase || 'selection',
     player_ready: state[`${playerKey}Ready`] || false,
     opponent_ready: state[`${opponentKey}Ready`] || false,
+    opponent_card_ids: opponentCardIds,
     winner_id: match.winner_id,
     game_seed: match.game_seed,
   });
@@ -231,9 +240,14 @@ async function handleEndTurn(supabase, user, matchId, res) {
     return res.status(500).json({ error: 'Failed to update match state' });
   }
 
+  // When both ready, include opponent's queued card IDs for resolution
+  const opponentKey = isPlayer1 ? 'player2' : 'player1';
+  const opponentCardIds = bothReady ? (state[opponentKey]?.queuedCardIds || []) : undefined;
+
   return res.status(200).json({
     status: bothReady ? 'resolving' : 'waiting_for_opponent',
-    both_ready: bothReady
+    both_ready: bothReady,
+    opponent_card_ids: opponentCardIds,
   });
 }
 
@@ -281,6 +295,113 @@ async function handleForfeit(supabase, user, matchId, res) {
   await updatePlayerStats(supabase, loserId, false);
 
   return res.status(200).json({ status: 'forfeited', winner_id: winnerId });
+}
+
+// Sync game state after turn resolution (called by one client to update server)
+async function handleSyncState(supabase, user, matchId, payload, res) {
+  if (!payload) {
+    return res.status(400).json({ error: 'Missing payload' });
+  }
+
+  const { data: match, error } = await supabase
+    .from('pvp_matches')
+    .select('*')
+    .eq('id', matchId)
+    .single();
+
+  if (error || !match || match.status !== 'active') {
+    return res.status(200).json({ status: 'ok' });
+  }
+
+  const isPlayer1 = match.player1_id === user.id;
+  if (!isPlayer1 && match.player2_id !== user.id) {
+    return res.status(403).json({ error: 'Not a participant' });
+  }
+
+  const state = match.game_state || {};
+
+  // Update health/mana from the resolving client
+  if (payload.player1) {
+    state.player1 = { ...state.player1, ...payload.player1 };
+    delete state.player1.queuedCardIds;
+    state.player1.queuedCardCount = 0;
+  }
+  if (payload.player2) {
+    state.player2 = { ...state.player2, ...payload.player2 };
+    delete state.player2.queuedCardIds;
+    state.player2.queuedCardCount = 0;
+  }
+
+  // Reset for next turn
+  state.turnNumber = (state.turnNumber || 0) + 1;
+  state.phase = 'selection';
+  state.player1Ready = false;
+  state.player2Ready = false;
+
+  await supabase
+    .from('pvp_matches')
+    .update({ game_state: state, turn_number: state.turnNumber })
+    .eq('id', matchId);
+
+  return res.status(200).json({ status: 'synced' });
+}
+
+// Report game over (either client can call this when health <= 0)
+async function handleReportGameOver(supabase, user, matchId, payload, res) {
+  if (!payload || !payload.winner) {
+    return res.status(400).json({ error: 'Missing winner in payload' });
+  }
+
+  const { data: match, error } = await supabase
+    .from('pvp_matches')
+    .select('*')
+    .eq('id', matchId)
+    .single();
+
+  if (error || !match) {
+    return res.status(404).json({ error: 'Match not found' });
+  }
+
+  // Already finished - ignore duplicate reports
+  if (match.status === 'finished') {
+    return res.status(200).json({ status: 'already_finished', winner_id: match.winner_id });
+  }
+
+  const isPlayer1 = match.player1_id === user.id;
+  const isPlayer2 = match.player2_id === user.id;
+  if (!isPlayer1 && !isPlayer2) {
+    return res.status(403).json({ error: 'Not a participant' });
+  }
+
+  // Determine winner from payload ('player1' or 'player2')
+  const winnerId = payload.winner === 'player1' ? match.player1_id : match.player2_id;
+  const loserId = payload.winner === 'player1' ? match.player2_id : match.player1_id;
+
+  // Atomically update match status (guard against double-finish)
+  const { data: updated, error: updateError } = await supabase
+    .from('pvp_matches')
+    .update({
+      status: 'finished',
+      winner_id: winnerId,
+      finished_at: new Date().toISOString()
+    })
+    .eq('id', matchId)
+    .eq('status', 'active')
+    .select()
+    .single();
+
+  if (updateError || !updated) {
+    return res.status(200).json({ status: 'already_finished' });
+  }
+
+  // Update ELO ratings and stats
+  await updateEloRatings(supabase, winnerId, loserId);
+  await updatePlayerStats(supabase, winnerId, true);
+  await updatePlayerStats(supabase, loserId, false);
+
+  console.log(`[PVP] Game over: ${payload.winner} wins match ${matchId}`);
+
+  return res.status(200).json({ status: 'finished', winner_id: winnerId });
 }
 
 // Update ELO ratings for both players after a match

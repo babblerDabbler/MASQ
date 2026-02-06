@@ -38,6 +38,10 @@ import { GAME_CONFIG, gameState, drawCards, updateBoard, playCard, resolveTurn, 
 // PVP STATE
 // ============================================================================
 
+// Guard flag to prevent resolving the same turn multiple times
+// (multiple paths can trigger resolution: end_turn response, Realtime, polling, timer)
+let isResolving = false;
+
 export const pvpState = {
   isActive: false,           // Whether PVP mode is currently active
   matchId: null,             // Current match ID
@@ -109,23 +113,15 @@ async function initializePvpGame(gameSeed) {
   // Initialize particle system
   gameState.particleSystem = new ParticleSystem(scene);
 
-  // Get user's owned sets
-  let ownedSetIds = [1];
+  // Ensure userId is set
   const user = await supabase.auth.getUser();
   if (user.data.user) {
     gameState.userId = user.data.user.id;
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('owned_sets')
-      .eq('id', gameState.userId)
-      .single();
-    ownedSetIds = userProfile?.owned_sets || [1];
   }
 
-  // Build card pool from owned sets
-  const availableCards = cardSets
-    .filter(set => ownedSetIds.includes(set.id))
-    .flatMap(set => set.cards);
+  // PVP uses ALL card sets for both players to ensure identical deck pools
+  // (Owned sets only apply to AI mode — PVP must be deterministic from the shared seed)
+  const availableCards = cardSets.flatMap(set => set.cards);
 
   // Create weighted deck using shared seed for fairness
   // Both players use the same card pool but get different shuffles
@@ -221,6 +217,9 @@ async function pvpCountdown() {
 export function startPvpTurnTimer() {
   if (gameState.isPaused || !pvpState.isActive) return;
 
+  // Reset resolution guard for new turn
+  isResolving = false;
+
   clearInterval(gameState.turnTimer);
   // No opponent queue timer in PVP - opponent is a real player
   clearInterval(gameState.opponentQueueTimer);
@@ -275,6 +274,7 @@ export function startPvpTurnTimer() {
 
       if (gameState.playerReady && gameState.computerReady) {
         clearInterval(gameState.turnTimer);
+        // Resolve with no IDs — pvpResolveTurn will fetch them from server
         pvpResolveTurn();
       }
     }
@@ -361,9 +361,9 @@ export async function pvpEndTurn() {
     const result = await response.json();
 
     if (result.both_ready) {
-      // Both players ready - resolve immediately
+      // Both players ready - resolve with opponent's card IDs from response
       gameState.computerReady = true;
-      pvpResolveTurn();
+      pvpResolveTurn(result.opponent_card_ids);
     } else {
       log("Waiting for opponent to finish their turn...");
       // Show waiting indicator
@@ -375,28 +375,213 @@ export async function pvpEndTurn() {
   }
 }
 
-// Resolve the PVP turn (reuses existing resolveTurn logic)
-export function pvpResolveTurn() {
+// Resolve the PVP turn - fetches opponent's cards then resolves both together
+export async function pvpResolveTurn(opponentCardIds) {
+  // Guard against double resolution from multiple trigger paths
+  if (isResolving) return;
+  isResolving = true;
+
   log("Both players ready! Resolving turn...");
   showWaitingIndicator(false);
-
-  // Stop polling during resolution
   stopOpponentPolling();
 
-  // Use the existing resolve turn logic from game.js
-  // This handles card effects, damage, combos, etc.
+  // Fetch opponent's card IDs from server if not provided
+  if (!opponentCardIds || opponentCardIds.length === 0) {
+    opponentCardIds = await fetchOpponentCardIds();
+  }
+
+  // Populate gameState.opponent.queuedCards from server card IDs
+  prepareOpponentCards(opponentCardIds || []);
+
+  // Now both player's and opponent's queued cards are populated
+  // Capture count before resolveTurn clears them
+  const opponentCardCount = gameState.opponent.queuedCards.length;
+
+  // Resolve the turn using existing game.js logic (handles effects, damage, combos)
   resolveTurn();
 
-  // After resolution, check for game over
-  // The resolveTurn function already handles starting the next turn
-  // We just need to restart our PVP-specific polling when the next turn begins
-  setTimeout(() => {
-    if (pvpState.isActive && gameState.player.health > 0 && gameState.opponent.health > 0) {
-      // Override the AI turn timer with PVP turn timer
-      clearInterval(gameState.opponentQueueTimer);
-      gameState.opponentQueueTimer = null;
+  // Schedule post-resolution sync after resolveTurn's internal timeouts complete
+  const revealDelay = opponentCardCount * (GAME_CONFIG.CARD_REVEAL_DELAY + 200);
+  const totalDelay = revealDelay + GAME_CONFIG.TURN_RESOLVE_DELAY + 1500;
+  setTimeout(() => pvpPostResolution(), totalDelay);
+}
+
+// Fetch opponent's queued card IDs from server
+async function fetchOpponentCardIds() {
+  try {
+    const session = await supabase.auth.getSession();
+    const token = session.data.session?.access_token;
+    if (!token) return [];
+
+    const response = await fetch('/api/pvp/match-action', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        action: 'get_state',
+        match_id: pvpState.matchId
+      })
+    });
+
+    const result = await response.json();
+    return result.opponent_card_ids || [];
+  } catch (err) {
+    console.error('[PVP] Error fetching opponent cards:', err);
+    return [];
+  }
+}
+
+// Populate opponent's queued cards from server-provided card IDs
+function prepareOpponentCards(cardIds) {
+  if (!cardIds || cardIds.length === 0) {
+    log("Opponent queued no cards this turn.");
+    return;
+  }
+
+  // Build a lookup of all card data by ID
+  const allCardData = cardSets.flatMap(set => set.cards);
+  const cardDataById = {};
+  allCardData.forEach(c => { cardDataById[c.id] = c; });
+
+  cardIds.forEach(id => {
+    // Try to find matching card in opponent's local hand (maintained by seeded deck)
+    const handIndex = gameState.opponent.hand.findIndex(c => c.data.id === id);
+    if (handIndex !== -1) {
+      const card = gameState.opponent.hand.splice(handIndex, 1)[0];
+      gameState.opponent.mana -= card.data.cost;
+      gameState.opponent.queuedCards.push(card);
+    } else {
+      // Fallback: create card from database if hand state drifted
+      const cardData = cardDataById[id];
+      if (cardData) {
+        const card = new Card(cardData, false);
+        card.mesh.visible = true;
+        gameState.opponent.queuedCards.push(card);
+        console.warn(`[PVP] Card ${id} (${cardData.name}) not in opponent hand, created from DB`);
+      }
     }
-  }, 2000);
+  });
+
+  updateBoard();
+}
+
+// Post-resolution: sync state to server and check for game over
+async function pvpPostResolution() {
+  if (!pvpState.isActive) return;
+
+  // Check for game over locally
+  if (gameState.player.health <= 0 || gameState.opponent.health <= 0) {
+    const playerWon = gameState.opponent.health <= 0 && gameState.player.health > 0;
+    // Both dead = draw, treat as loss for simplicity
+    await reportPvpGameOver(playerWon);
+    return;
+  }
+
+  // Sync state to server (only player1 syncs to avoid conflicts)
+  if (pvpState.isPlayer1) {
+    await syncStateToServer();
+  }
+
+  // Reset resolution guard for next turn
+  isResolving = false;
+}
+
+// Sync updated game state back to server after resolution
+async function syncStateToServer() {
+  try {
+    const session = await supabase.auth.getSession();
+    const token = session.data.session?.access_token;
+    if (!token) return;
+
+    await fetch('/api/pvp/match-action', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        action: 'sync_state',
+        match_id: pvpState.matchId,
+        payload: {
+          player1: {
+            health: pvpState.isPlayer1 ? gameState.player.health : gameState.opponent.health,
+            maxHealth: pvpState.isPlayer1 ? gameState.player.maxHealth : gameState.opponent.maxHealth,
+            mana: pvpState.isPlayer1 ? gameState.player.mana : gameState.opponent.mana,
+            maxMana: pvpState.isPlayer1 ? gameState.player.maxMana : gameState.opponent.maxMana,
+            handSize: pvpState.isPlayer1 ? gameState.player.hand.length : gameState.opponent.hand.length,
+            deckSize: pvpState.isPlayer1 ? gameState.player.deck.length : gameState.opponent.deck.length,
+          },
+          player2: {
+            health: pvpState.isPlayer1 ? gameState.opponent.health : gameState.player.health,
+            maxHealth: pvpState.isPlayer1 ? gameState.opponent.maxHealth : gameState.player.maxHealth,
+            mana: pvpState.isPlayer1 ? gameState.opponent.mana : gameState.player.mana,
+            maxMana: pvpState.isPlayer1 ? gameState.opponent.maxMana : gameState.player.maxMana,
+            handSize: pvpState.isPlayer1 ? gameState.opponent.hand.length : gameState.player.hand.length,
+            deckSize: pvpState.isPlayer1 ? gameState.opponent.deck.length : gameState.player.deck.length,
+          }
+        }
+      })
+    });
+  } catch (err) {
+    console.warn('[PVP] State sync error:', err);
+  }
+}
+
+// Report game over to server
+async function reportPvpGameOver(playerWon) {
+  pvpState.isActive = false;
+  stopOpponentPolling();
+  clearInterval(gameState.turnTimer);
+
+  // Determine winner in server terms (player1 or player2)
+  let winner;
+  if (gameState.player.health <= 0 && gameState.opponent.health <= 0) {
+    // Both dead — opponent wins (current player forfeited effectively)
+    winner = pvpState.isPlayer1 ? 'player2' : 'player1';
+  } else if (playerWon) {
+    winner = pvpState.isPlayer1 ? 'player1' : 'player2';
+  } else {
+    winner = pvpState.isPlayer1 ? 'player2' : 'player1';
+  }
+
+  try {
+    const session = await supabase.auth.getSession();
+    const token = session.data.session?.access_token;
+    if (token) {
+      await fetch('/api/pvp/match-action', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: 'report_game_over',
+          match_id: pvpState.matchId,
+          payload: { winner }
+        })
+      });
+    }
+  } catch (err) {
+    console.error('[PVP] Report game over error:', err);
+  }
+
+  // Show PVP game over screen
+  if (playerWon) {
+    log("You win the PVP match!");
+    gameState.player.winStreak += 1;
+    gameState.player.totalWins += 1;
+    createVictoryEffect(scene);
+  } else {
+    log("You lost the PVP match.");
+    gameState.player.winStreak = 0;
+    gameState.player.totalLosses += 1;
+    createDefeatEffect(scene);
+    screenShake(camera, 0.5, 500);
+  }
+
+  setTimeout(() => showPvpGameOverScreen(playerWon), 2500);
 }
 
 // ============================================================================
@@ -449,23 +634,17 @@ function handleMatchUpdate(matchData) {
 
   // Update opponent ready state
   const opponentReadyKey = pvpState.isPlayer1 ? 'player2Ready' : 'player1Ready';
+  const opponentKey = pvpState.isPlayer1 ? 'player2' : 'player1';
+
   if (state[opponentReadyKey]) {
     gameState.computerReady = true;
     log("Opponent is ready!");
 
-    // If we're also ready, resolve
+    // If we're also ready, resolve with opponent's card IDs from Realtime payload
     if (gameState.playerReady) {
-      pvpResolveTurn();
+      const opponentCardIds = state[opponentKey]?.queuedCardIds || [];
+      pvpResolveTurn(opponentCardIds);
     }
-  }
-
-  // Sync opponent health/mana from server (authoritative)
-  const opponentKey = pvpState.isPlayer1 ? 'player2' : 'player1';
-  if (state[opponentKey]) {
-    gameState.opponent.health = state[opponentKey].health ?? gameState.opponent.health;
-    gameState.opponent.mana = state[opponentKey].mana ?? gameState.opponent.mana;
-    gameState.opponent.maxMana = state[opponentKey].maxMana ?? gameState.opponent.maxMana;
-    updateUI();
   }
 }
 
@@ -531,7 +710,7 @@ function startOpponentPolling() {
         log("Opponent is ready!");
 
         if (gameState.playerReady) {
-          pvpResolveTurn();
+          pvpResolveTurn(result.opponent_card_ids);
         }
       }
     } catch (err) {
@@ -552,9 +731,12 @@ function stopOpponentPolling() {
 // MATCH END
 // ============================================================================
 
-// Handle match completion
+// Handle match completion (from Realtime or forfeit)
 function handleMatchEnd(matchData) {
+  if (!pvpState.isActive) return; // Already handled
+
   pvpState.isActive = false;
+  isResolving = false;
   stopOpponentPolling();
 
   if (pvpState.channel) {
@@ -668,6 +850,7 @@ export function cleanupPvpMatch() {
   pvpState.opponentRating = 1000;
   pvpState.lastServerState = null;
   pvpState.missedTurns = 0;
+  isResolving = false;
 
   // Clear PVP mode flag so game.js reverts to AI mode behavior
   gameState.pvpMode = false;
