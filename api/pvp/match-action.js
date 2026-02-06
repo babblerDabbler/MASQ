@@ -34,7 +34,11 @@ export default async function handler(req, res) {
   }
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-    return res.status(500).json({ error: 'Server configuration error' });
+    console.error('[PVP Match Action] Missing env vars:', {
+      hasUrl: !!SUPABASE_URL,
+      hasServiceKey: !!SUPABASE_SERVICE_KEY
+    });
+    return res.status(500).json({ error: 'Server configuration error: missing environment variables' });
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);

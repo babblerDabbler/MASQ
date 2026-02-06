@@ -6,6 +6,7 @@
 // The server validates the user's identity before any matchmaking action.
 
 import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -24,7 +25,11 @@ export default async function handler(req, res) {
 
   // Validate environment
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-    return res.status(500).json({ error: 'Server configuration error' });
+    console.error('[PVP Matchmaking] Missing env vars:', {
+      hasUrl: !!SUPABASE_URL,
+      hasServiceKey: !!SUPABASE_SERVICE_KEY
+    });
+    return res.status(500).json({ error: 'Server configuration error: missing environment variables' });
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
@@ -262,8 +267,6 @@ async function attemptMatchPairing(supabase, userId, userRating, queuedSeconds =
 // Generate a deterministic seed for fair deck generation
 function generateGameSeed() {
   const bytes = new Uint8Array(16);
-  // Use Node.js crypto for secure random on server
-  const crypto = require('crypto');
   crypto.randomFillSync(bytes);
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
