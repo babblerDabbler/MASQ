@@ -297,11 +297,13 @@ export function animateCardHover(card, isHovering, isInHand = true) {
     card._originalZ = mesh.position.z;
   }
 
+  // INSTANT scale change - no animation for zoom
+  mesh.scale.setScalar(targetScale);
+
   // Calculate start and target positions
   const startX = mesh.position.x;
   const startY = mesh.position.y;
   const startZ = mesh.position.z;
-  const startScale = mesh.scale.x;
 
   let targetY, targetX;
   if (isInHand && isHovering) {
@@ -317,22 +319,22 @@ export function animateCardHover(card, isHovering, isInHand = true) {
     targetX = startX;
   }
 
-  // Single animation for all properties using direct lerp (no drift)
-  animationManager.add({
-    card,
-    startTime: performance.now(),
-    duration: 200,
-    easing: Easing.easeOutCubic,
-    onUpdate: (progress) => {
-      // Direct lerp from start to target - prevents cumulative drift
-      mesh.scale.setScalar(startScale + (targetScale - startScale) * progress);
-      mesh.position.z = startZ + (targetZ - startZ) * progress;
-      if (isInHand) {
+  // Instant Z position change as well
+  mesh.position.z = targetZ;
+
+  // Only animate X/Y position smoothly for cards in hand
+  if (isInHand && (startX !== targetX || startY !== targetY)) {
+    animationManager.add({
+      card,
+      startTime: performance.now(),
+      duration: 150,
+      easing: Easing.easeOutCubic,
+      onUpdate: (progress) => {
         mesh.position.y = startY + (targetY - startY) * progress;
         mesh.position.x = startX + (targetX - startX) * progress;
       }
-    }
-  });
+    });
+  }
 
   // Reset original position when not hovering
   if (!isHovering && card._originalY !== undefined) {
