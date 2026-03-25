@@ -1251,6 +1251,7 @@ button:hover {
   border-radius: 5px 0 0 5px;
   box-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
   position: relative;
+  will-change: width, background;
 }
 
 .health-fill::after {
@@ -1287,6 +1288,7 @@ button:hover {
   border-radius: 5px 0 0 5px;
   box-shadow: 0 0 8px rgba(52, 152, 219, 0.5);
   position: relative;
+  will-change: width;
 }
 
 .mana-fill::after {
@@ -1461,13 +1463,20 @@ button:hover {
   color: #FFD700;
   text-shadow: 0 0 20px rgba(255, 0, 0, 0.9), 0 0 40px rgba(255, 69, 0, 0.6);
   pointer-events: none;
-  animation: timerPulse 1.5s infinite ease-in-out;
   display: none;
   background: none;
   padding: 0;
   border-radius: 0;
   border: none;
   box-shadow: none;
+  /* GPU acceleration hint */
+  will-change: transform, opacity;
+}
+
+/* Only animate when visible to save CPU */
+.timer.active {
+  display: block;
+  animation: timerPulse 1.5s infinite ease-in-out;
 }
 
 @keyframes timerPulseWarning {
@@ -2668,6 +2677,23 @@ button,
     0% { text-shadow: 0 0 4px #FF0000, 0 0 6px #FF4500; }
     50% { text-shadow: 0 0 6px #FF0000, 0 0 9px #FF4500; }
     100% { text-shadow: 0 0 4px #FF0000, 0 0 6px #FF4500; }
+  }
+}
+
+
+/* =============================================================================
+   27. REDUCED MOTION SUPPORT (Accessibility)
+   Used by: ALL PAGES
+   ============================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

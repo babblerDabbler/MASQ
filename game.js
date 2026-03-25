@@ -35,7 +35,9 @@ import {
   ParticleSystem,
   createVictoryEffect,
   createDefeatEffect,
-  animateHealthBar
+  animateHealthBar,
+  clearDamageNumbers,
+  clearDamageTextureCache
 } from './animations.js';
 import { updateUI, log, initUIEvents, hideGameUI } from './ui.js';
 import { supabase } from './supabaseClient.js';
@@ -297,6 +299,13 @@ function clearSceneAndState() {
   if (gameState.particleSystem && gameState.particleSystem.dispose) {
     gameState.particleSystem.dispose();
   }
+
+  // Clear damage numbers and cached textures for memory cleanup
+  clearDamageNumbers(scene);
+  clearDamageTextureCache();
+
+  // Clear any pending animations
+  animationManager.clearAll();
 
   const logDiv = document.getElementById('gameLog');
   if (logDiv) logDiv.innerHTML = '';
@@ -1174,7 +1183,11 @@ const mouse = new THREE.Vector2();
 
 // Throttle helper for performance
 let lastMouseMoveTime = 0;
-const MOUSE_THROTTLE_MS = 16; // ~60fps
+const MOUSE_THROTTLE_MS = 32; // ~30fps for hover (reduces CPU usage)
+
+// Separate throttle for hover animations to prevent rapid triggering
+let lastHoverAnimationTime = 0;
+const HOVER_ANIMATION_THROTTLE_MS = 50;
 
 export function onMouseMove(event) {
   // Throttle mouse move events for performance
@@ -1207,9 +1220,11 @@ export function onMouseMove(event) {
       // Check if card is in hand vs played
       const isInHand = gameState.player.hand.includes(card);
 
-      // Track hover state to prevent repeated animations
-      if (!card._isHovered) {
+      // Track hover state to prevent repeated animations (with throttle)
+      const hoverNow = performance.now();
+      if (!card._isHovered && (hoverNow - lastHoverAnimationTime >= HOVER_ANIMATION_THROTTLE_MS)) {
         card._isHovered = true;
+        lastHoverAnimationTime = hoverNow;
         animateCardHover(card, true, isInHand);
       }
 
