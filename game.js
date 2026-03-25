@@ -1307,6 +1307,7 @@ const TARGET_FRAME_TIME = 1000 / 60; // 60fps target
 function updatePlayableGlow() {
   const currentMana = gameState.player.mana;
   const isTurnActive = gameState.isTurnActive && !gameState.isPaused;
+  const time = performance.now() / 1000; // Time in seconds for pulse animation
 
   for (const card of gameState.player.hand) {
     if (card.mesh && card.mesh.material && card.mesh.material.uniforms) {
@@ -1316,6 +1317,11 @@ function updatePlayableGlow() {
       // Smooth transition for the glow
       const currentGlow = card.mesh.material.uniforms.playableGlow.value;
       card.mesh.material.uniforms.playableGlow.value = currentGlow + (targetGlow - currentGlow) * 0.15;
+
+      // Update time for pulse animation
+      if (card.mesh.material.uniforms.time) {
+        card.mesh.material.uniforms.time.value = time;
+      }
     }
   }
 
