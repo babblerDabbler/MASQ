@@ -143,6 +143,7 @@ const vertexShader = `
 
 const fragmentShader = `
     uniform sampler2D cardTexture;
+    uniform float playableGlow;
     varying vec2 vUv;
 
     void main() {
@@ -152,8 +153,17 @@ const fragmentShader = `
         float borderGlow = smoothstep(0.0, borderWidth, vUv.x) * smoothstep(0.0, borderWidth, 1.0 - vUv.x)
                          * smoothstep(0.0, borderWidth, vUv.y) * smoothstep(0.0, borderWidth, 1.0 - vUv.y);
 
+        // Green glow for playable cards (when playableGlow > 0)
+        float glowEdge = 0.06;
+        float edgeDist = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y));
+        float greenGlow = (1.0 - smoothstep(0.0, glowEdge, edgeDist)) * playableGlow;
+
         vec3 glowColor = mix(vec3(1.0, 0.84, 0.0), texColor.rgb, 0.9); // gold glow
         vec3 finalColor = mix(glowColor, texColor.rgb, borderGlow);
+
+        // Add green glow overlay for playable cards
+        vec3 greenGlowColor = vec3(0.2, 1.0, 0.3);
+        finalColor = mix(finalColor, greenGlowColor, greenGlow * 0.7);
 
         gl_FragColor = vec4(finalColor, texColor.a);
     }
@@ -184,6 +194,7 @@ export class Card {
   const material = new THREE.ShaderMaterial({
     uniforms: {
       cardTexture: { value: this.isPlayer ? texture : cardBackMaterial.map },
+      playableGlow: { value: 0.0 },
     },
     vertexShader,
     fragmentShader,

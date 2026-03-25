@@ -1298,6 +1298,30 @@ export function onMouseUp(event) {
 let lastFrameTime = 0;
 const TARGET_FRAME_TIME = 1000 / 60; // 60fps target
 
+// Update playable glow for cards in hand based on current mana
+function updatePlayableGlow() {
+  const currentMana = gameState.player.mana;
+  const isTurnActive = gameState.isTurnActive && !gameState.isPaused;
+
+  for (const card of gameState.player.hand) {
+    if (card.mesh && card.mesh.material && card.mesh.material.uniforms) {
+      const canPlay = isTurnActive && card.data.cost <= currentMana;
+      const targetGlow = canPlay ? 1.0 : 0.0;
+
+      // Smooth transition for the glow
+      const currentGlow = card.mesh.material.uniforms.playableGlow.value;
+      card.mesh.material.uniforms.playableGlow.value = currentGlow + (targetGlow - currentGlow) * 0.15;
+    }
+  }
+
+  // Also reset glow for played cards and opponent cards
+  for (const card of [...gameState.player.playedCards, ...gameState.opponent.hand, ...gameState.opponent.playedCards]) {
+    if (card.mesh && card.mesh.material && card.mesh.material.uniforms && card.mesh.material.uniforms.playableGlow) {
+      card.mesh.material.uniforms.playableGlow.value = 0.0;
+    }
+  }
+}
+
 export function animate(currentTime = 0) {
   if (!gameState.isPaused) {
     requestAnimationFrame(animate);
@@ -1313,6 +1337,9 @@ export function animate(currentTime = 0) {
       const targetZ = gameState.draggingCard.mesh.position.z;
       gameState.draggingCard.mesh.position.set(mouse.x * 20, mouse.y * 15, targetZ + 5);
     }
+
+    // Update playable glow for cards in hand
+    updatePlayableGlow();
 
     // Batch card updates for better performance
     const allCards = [
