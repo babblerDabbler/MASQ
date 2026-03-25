@@ -141,6 +141,58 @@
             <div class="title glow">the MASQuerades</div>
             <div class="subtitle">$MASQ</div>
         </div>
+        <!-- Profile/Login Button -->
+        <div class="profile-btn-container">
+            <button id="profileBtn" class="profile-btn" style="display: none;">
+                <span class="profile-icon">👤</span>
+                <span class="profile-name" id="profileName">Profile</span>
+            </button>
+            <button id="loginHeaderBtn" class="profile-btn">
+                <span class="profile-icon">👤</span>
+                <span class="profile-name">Sign In</span>
+            </button>
+            <!-- Profile Dropdown -->
+            <div id="profileDropdown" class="profile-dropdown" style="display: none;">
+                <div class="profile-dropdown-header">
+                    <img src="/assets/logomasq1-g11o.gif" alt="Avatar" class="profile-dropdown-avatar">
+                    <span class="profile-dropdown-name" id="dropdownUsername">Player</span>
+                </div>
+                <div class="profile-dropdown-stats">
+                    <div class="profile-stat">
+                        <span class="profile-stat-icon">🏆</span>
+                        <span class="profile-stat-label">Wins</span>
+                        <span class="profile-stat-value" id="profileWins">0</span>
+                    </div>
+                    <div class="profile-stat">
+                        <span class="profile-stat-icon">💀</span>
+                        <span class="profile-stat-label">Losses</span>
+                        <span class="profile-stat-value" id="profileLosses">0</span>
+                    </div>
+                    <div class="profile-stat">
+                        <span class="profile-stat-icon">🔥</span>
+                        <span class="profile-stat-label">Streak</span>
+                        <span class="profile-stat-value" id="profileStreak">0</span>
+                    </div>
+                </div>
+                <div class="profile-dropdown-actions">
+                    <button id="logoutBtn" class="profile-logout-btn">Logout</button>
+                </div>
+            </div>
+            <!-- Login Modal -->
+            <div id="loginModal" class="login-modal" style="display: none;">
+                <div class="login-modal-content">
+                    <h3>Sign In</h3>
+                    <input type="text" id="loginUsername" placeholder="Username" autocomplete="off"/>
+                    <input type="password" id="loginPassword" placeholder="Password"/>
+                    <div class="login-modal-buttons">
+                        <button id="modalLoginBtn">Login</button>
+                        <button id="modalSignupBtn">Sign Up</button>
+                        <button id="modalGuestBtn">Guest</button>
+                    </div>
+                    <button id="closeLoginModal" class="login-modal-close">×</button>
+                </div>
+            </div>
+        </div>
     </div>
     <audio id="bg-audio" autoplay muted loop>
         <source src="/assets/bg_score.mp3" type="audio/mpeg">
@@ -498,7 +550,135 @@ document.getElementById("copyCA").addEventListener("click", function () {
       }, 1500);
     });
   });
-      
+
+    </script>
+
+    <!-- Auth module script -->
+    <script type="module">
+        import { signUp, login, getUser, playAsGuest, getUserStats, logout } from './auth.js';
+
+        const profileBtn = document.getElementById('profileBtn');
+        const loginHeaderBtn = document.getElementById('loginHeaderBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+        const loginModal = document.getElementById('loginModal');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const closeLoginModal = document.getElementById('closeLoginModal');
+
+        // Check if user is already logged in
+        async function checkAuthState() {
+            try {
+                const user = await getUser();
+                if (user) {
+                    const stats = await getUserStats(user.id);
+                    showProfileButton(user.user_metadata?.username || 'Player', stats);
+                }
+            } catch (err) {
+                console.log('Not logged in');
+            }
+        }
+
+        function showProfileButton(username, stats) {
+            document.getElementById('profileName').textContent = username;
+            document.getElementById('dropdownUsername').textContent = username;
+            document.getElementById('profileWins').textContent = stats?.total_wins || 0;
+            document.getElementById('profileLosses').textContent = stats?.total_losses || 0;
+            document.getElementById('profileStreak').textContent = stats?.win_streak || 0;
+            profileBtn.style.display = 'flex';
+            loginHeaderBtn.style.display = 'none';
+        }
+
+        // Show login modal when Sign In button clicked
+        loginHeaderBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            loginModal.style.display = loginModal.style.display === 'block' ? 'none' : 'block';
+            profileDropdown.style.display = 'none';
+        });
+
+        // Toggle profile dropdown
+        profileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.style.display = profileDropdown.style.display === 'block' ? 'none' : 'block';
+            loginModal.style.display = 'none';
+        });
+
+        // Close modal
+        closeLoginModal.addEventListener('click', () => {
+            loginModal.style.display = 'none';
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            const container = document.querySelector('.profile-btn-container');
+            if (!container.contains(e.target)) {
+                profileDropdown.style.display = 'none';
+                loginModal.style.display = 'none';
+            }
+        });
+
+        // Login handler
+        document.getElementById('modalLoginBtn').addEventListener('click', async () => {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            try {
+                const result = await login(username, password);
+                if (result?.error || !result?.user) {
+                    alert('Login failed: ' + (result?.error?.message || 'Invalid credentials.'));
+                    return;
+                }
+                const user = await getUser();
+                if (user) {
+                    const stats = await getUserStats(user.id);
+                    showProfileButton(result.username, stats);
+                    loginModal.style.display = 'none';
+                    document.getElementById('loginUsername').value = '';
+                    document.getElementById('loginPassword').value = '';
+                }
+            } catch (err) {
+                alert('Login error: ' + err.message);
+            }
+        });
+
+        // Signup handler
+        document.getElementById('modalSignupBtn').addEventListener('click', async () => {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            try {
+                const result = await signUp(username, password);
+                if (result?.error) {
+                    alert('Signup failed: ' + result.error.message);
+                    return;
+                }
+                alert('Signup successful! Please login.');
+            } catch (err) {
+                alert('Signup error: ' + err.message);
+            }
+        });
+
+        // Guest handler
+        document.getElementById('modalGuestBtn').addEventListener('click', async () => {
+            try {
+                const result = await playAsGuest();
+                showProfileButton(result.username, { total_wins: 0, total_losses: 0, win_streak: 0 });
+                loginModal.style.display = 'none';
+            } catch (err) {
+                alert('Guest mode error: ' + err.message);
+            }
+        });
+
+        // Logout handler
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await logout();
+            } catch (err) {
+                console.error('Logout error:', err);
+            }
+            profileBtn.style.display = 'none';
+            loginHeaderBtn.style.display = 'flex';
+            profileDropdown.style.display = 'none';
+        });
+
+        // Check auth state on page load
+        checkAuthState();
     </script>
 </body>
 </html>
