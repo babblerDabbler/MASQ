@@ -241,28 +241,51 @@ export async function animateCardDraw(card, targetPosition, isPlayer = true) {
   await animationManager.animateScale(mesh, 1.0, 100, Easing.easeOutQuad);
 }
 
-// Card play animation - arc to center with spin
+// Card play animation - zoom to center first, then move to board
 export async function animateCardPlay(card, targetPosition) {
   const mesh = card.mesh;
   const startPos = mesh.position.clone();
-  const duration = 400;
+  const startScale = mesh.scale.x;
+
+  // Center of screen position (in 3D space)
+  const centerPos = new THREE.Vector3(0, 0, 4);
+  const zoomScale = 2.5;
 
   // Glow effect during play
   if (mesh.material.uniforms && mesh.material.uniforms.glowIntensity) {
     mesh.material.uniforms.glowIntensity.value = 1.0;
   }
 
+  // Phase 1: Zoom to center of screen
   await animationManager.animate({
-    duration,
+    duration: 250,
+    easing: Easing.easeOutCubic,
+    onUpdate: (progress) => {
+      mesh.position.x = startPos.x + (centerPos.x - startPos.x) * progress;
+      mesh.position.y = startPos.y + (centerPos.y - startPos.y) * progress;
+      mesh.position.z = startPos.z + (centerPos.z - startPos.z) * progress;
+      mesh.scale.setScalar(startScale + (zoomScale - startScale) * progress);
+    }
+  });
+
+  // Brief pause at center
+  await new Promise(resolve => setTimeout(resolve, 150));
+
+  // Phase 2: Move from center to board position
+  const fromCenter = mesh.position.clone();
+  const targetScale = 0.25; // Final board scale
+
+  await animationManager.animate({
+    duration: 300,
     easing: Easing.easeOutBack,
     onUpdate: (progress) => {
-      const t = progress;
-      mesh.position.x = startPos.x + (targetPosition.x - startPos.x) * t;
-      mesh.position.y = startPos.y + (targetPosition.y - startPos.y) * t + Math.sin(t * Math.PI) * 1.5;
-      mesh.position.z = startPos.z + (targetPosition.z - startPos.z) * t + Math.sin(t * Math.PI) * 0.5;
+      mesh.position.x = fromCenter.x + (targetPosition.x - fromCenter.x) * progress;
+      mesh.position.y = fromCenter.y + (targetPosition.y - fromCenter.y) * progress;
+      mesh.position.z = fromCenter.z + (targetPosition.z - fromCenter.z) * progress;
+      mesh.scale.setScalar(zoomScale + (targetScale - zoomScale) * progress);
 
       // Slight rotation during flight
-      mesh.rotation.z = Math.sin(t * Math.PI * 2) * 0.1;
+      mesh.rotation.z = Math.sin(progress * Math.PI) * 0.1;
     }
   });
 
@@ -279,64 +302,41 @@ export async function animateCardPlay(card, targetPosition) {
   }
 }
 
-// Card hover animation
+// Card hover - completely instant, no animation
 export function animateCardHover(card, isHovering, isInHand = true) {
   const mesh = card.mesh;
 
-  // Cancel any existing hover animations for this card
+  // Cancel any existing animations for this card
   animationManager.cancelForCard(card);
 
-  // Larger zoom for cards in hand, bigger for played cards too
+  // Scale values
   const targetScale = isHovering ? (isInHand ? 2.0 : 0.6) : (isInHand ? 1.0 : 0.25);
   const targetZ = isHovering ? 3.0 : 0.5;
 
-  // Store original position if not stored
+  // Store original position when first hovering
   if (isInHand && isHovering && card._originalY === undefined) {
     card._originalY = mesh.position.y;
     card._originalX = mesh.position.x;
     card._originalZ = mesh.position.z;
   }
 
-  // INSTANT scale change - no animation for zoom
+  // ALL changes are instant - no animation
   mesh.scale.setScalar(targetScale);
-
-  // Calculate start and target positions
-  const startX = mesh.position.x;
-  const startY = mesh.position.y;
-  const startZ = mesh.position.z;
-
-  let targetY, targetX;
-  if (isInHand && isHovering) {
-    // Raise card up and move towards center (reduce X distance from center by 50%)
-    targetY = (card._originalY || startY) + 3.5;
-    targetX = (card._originalX || startX) * 0.5;
-  } else if (isInHand && !isHovering) {
-    // Return to original position
-    targetY = card._originalY || startY;
-    targetX = card._originalX || startX;
-  } else {
-    targetY = startY;
-    targetX = startX;
-  }
-
-  // Instant Z position change as well
   mesh.position.z = targetZ;
 
-  // Only animate X/Y position smoothly for cards in hand
-  if (isInHand && (startX !== targetX || startY !== targetY)) {
-    animationManager.add({
-      card,
-      startTime: performance.now(),
-      duration: 150,
-      easing: Easing.easeOutCubic,
-      onUpdate: (progress) => {
-        mesh.position.y = startY + (targetY - startY) * progress;
-        mesh.position.x = startX + (targetX - startX) * progress;
-      }
-    });
+  if (isInHand) {
+    if (isHovering) {
+      // Move up and towards center instantly
+      mesh.position.y = (card._originalY || mesh.position.y) + 3.5;
+      mesh.position.x = (card._originalX || mesh.position.x) * 0.5;
+    } else if (card._originalY !== undefined) {
+      // Return to original position instantly
+      mesh.position.y = card._originalY;
+      mesh.position.x = card._originalX;
+    }
   }
 
-  // Reset original position when not hovering
+  // Reset stored position when not hovering
   if (!isHovering && card._originalY !== undefined) {
     delete card._originalY;
     delete card._originalX;
