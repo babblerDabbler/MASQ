@@ -153,17 +153,19 @@ const fragmentShader = `
         float borderGlow = smoothstep(0.0, borderWidth, vUv.x) * smoothstep(0.0, borderWidth, 1.0 - vUv.x)
                          * smoothstep(0.0, borderWidth, vUv.y) * smoothstep(0.0, borderWidth, 1.0 - vUv.y);
 
-        // Green glow for playable cards (when playableGlow > 0)
-        float glowEdge = 0.06;
-        float edgeDist = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y));
-        float greenGlow = (1.0 - smoothstep(0.0, glowEdge, edgeDist)) * playableGlow;
-
         vec3 glowColor = mix(vec3(1.0, 0.84, 0.0), texColor.rgb, 0.9); // gold glow
         vec3 finalColor = mix(glowColor, texColor.rgb, borderGlow);
 
-        // Add green glow overlay for playable cards
-        vec3 greenGlowColor = vec3(0.2, 1.0, 0.3);
-        finalColor = mix(finalColor, greenGlowColor, greenGlow * 0.7);
+        // Green glow border for playable cards (when playableGlow > 0)
+        if (playableGlow > 0.01) {
+            float glowWidth = 0.08;
+            float edgeDist = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y));
+            float greenIntensity = (1.0 - smoothstep(0.0, glowWidth, edgeDist)) * playableGlow;
+
+            // Bright green glow color
+            vec3 greenGlowColor = vec3(0.0, 1.0, 0.4);
+            finalColor = mix(finalColor, greenGlowColor, greenIntensity * 0.9);
+        }
 
         gl_FragColor = vec4(finalColor, texColor.a);
     }

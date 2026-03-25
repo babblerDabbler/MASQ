@@ -426,6 +426,11 @@ export function playCard(card) {
   if (gameState.player.mana < card.data.cost || !gameState.isTurnActive || gameState.isPaused) return;
   if (!gameState.player.hand.includes(card)) return; // Card not in hand
 
+  // Immediately reset playable glow when card is played
+  if (card.mesh && card.mesh.material && card.mesh.material.uniforms && card.mesh.material.uniforms.playableGlow) {
+    card.mesh.material.uniforms.playableGlow.value = 0.0;
+  }
+
   gameState.player.mana -= card.data.cost;
   gameState.player.hand = gameState.player.hand.filter(c => c !== card);
   gameState.player.queuedCards.push(card);

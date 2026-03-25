@@ -241,65 +241,42 @@ export async function animateCardDraw(card, targetPosition, isPlayer = true) {
   await animationManager.animateScale(mesh, 1.0, 100, Easing.easeOutQuad);
 }
 
-// Card play animation - zoom to center first, then move to board
-export async function animateCardPlay(card, targetPosition) {
+// Card play animation - smooth arc to board position
+export function animateCardPlay(card, targetPosition) {
   const mesh = card.mesh;
   const startPos = mesh.position.clone();
   const startScale = mesh.scale.x;
-
-  // Center of screen position (in 3D space)
-  const centerPos = new THREE.Vector3(0, 0, 4);
-  const zoomScale = 2.5;
-
-  // Glow effect during play
-  if (mesh.material.uniforms && mesh.material.uniforms.glowIntensity) {
-    mesh.material.uniforms.glowIntensity.value = 1.0;
-  }
-
-  // Phase 1: Zoom to center of screen
-  await animationManager.animate({
-    duration: 250,
-    easing: Easing.easeOutCubic,
-    onUpdate: (progress) => {
-      mesh.position.x = startPos.x + (centerPos.x - startPos.x) * progress;
-      mesh.position.y = startPos.y + (centerPos.y - startPos.y) * progress;
-      mesh.position.z = startPos.z + (centerPos.z - startPos.z) * progress;
-      mesh.scale.setScalar(startScale + (zoomScale - startScale) * progress);
-    }
-  });
-
-  // Brief pause at center
-  await new Promise(resolve => setTimeout(resolve, 150));
-
-  // Phase 2: Move from center to board position
-  const fromCenter = mesh.position.clone();
   const targetScale = 0.25; // Final board scale
 
-  await animationManager.animate({
-    duration: 300,
-    easing: Easing.easeOutBack,
+  // Reset playable glow immediately when played
+  if (mesh.material.uniforms && mesh.material.uniforms.playableGlow) {
+    mesh.material.uniforms.playableGlow.value = 0.0;
+  }
+
+  // Single smooth animation to target
+  animationManager.add({
+    card,
+    startTime: performance.now(),
+    duration: 400,
+    easing: Easing.easeOutCubic,
     onUpdate: (progress) => {
-      mesh.position.x = fromCenter.x + (targetPosition.x - fromCenter.x) * progress;
-      mesh.position.y = fromCenter.y + (targetPosition.y - fromCenter.y) * progress;
-      mesh.position.z = fromCenter.z + (targetPosition.z - fromCenter.z) * progress;
-      mesh.scale.setScalar(zoomScale + (targetScale - zoomScale) * progress);
+      // Smooth arc to target position
+      mesh.position.x = startPos.x + (targetPosition.x - startPos.x) * progress;
+      mesh.position.y = startPos.y + (targetPosition.y - startPos.y) * progress + Math.sin(progress * Math.PI) * 1.5;
+      mesh.position.z = startPos.z + (targetPosition.z - startPos.z) * progress;
+
+      // Scale down to board size
+      mesh.scale.setScalar(startScale + (targetScale - startScale) * progress);
 
       // Slight rotation during flight
       mesh.rotation.z = Math.sin(progress * Math.PI) * 0.1;
+    },
+    onComplete: () => {
+      mesh.rotation.z = 0;
+      mesh.scale.setScalar(targetScale);
+      mesh.position.copy(targetPosition);
     }
   });
-
-  mesh.rotation.z = 0;
-
-  // Fade glow
-  if (mesh.material.uniforms && mesh.material.uniforms.glowIntensity) {
-    animationManager.animate({
-      duration: 300,
-      onUpdate: (progress) => {
-        mesh.material.uniforms.glowIntensity.value = 1.0 - progress;
-      }
-    });
-  }
 }
 
 // Card hover - completely instant, no animation
