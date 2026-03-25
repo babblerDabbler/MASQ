@@ -310,7 +310,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 #### Setup Instructions
 
 ```bash
-git clone https://github.com/yourhandle/masq
+git clone [https://github.com/yourhandle/masq](https://github.com/babblerDabbler/MASQ)
 cd masq
 yarn install
 vercel deploy
