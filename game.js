@@ -35,7 +35,9 @@ import {
   ParticleSystem,
   createVictoryEffect,
   createDefeatEffect,
-  animateHealthBar
+  animateHealthBar,
+  clearDamageNumbers,
+  clearDamageTextureCache
 } from './animations.js';
 import { updateUI, log, initUIEvents, hideGameUI } from './ui.js';
 import { supabase } from './supabaseClient.js';
@@ -298,6 +300,13 @@ function clearSceneAndState() {
     gameState.particleSystem.dispose();
   }
 
+  // Clear damage numbers and cached textures for memory cleanup
+  clearDamageNumbers(scene);
+  clearDamageTextureCache();
+
+  // Clear any pending animations
+  animationManager.clearAll();
+
   const logDiv = document.getElementById('gameLog');
   if (logDiv) logDiv.innerHTML = '';
 
@@ -416,6 +425,11 @@ export function updateBoard() {
 export function playCard(card) {
   if (gameState.player.mana < card.data.cost || !gameState.isTurnActive || gameState.isPaused) return;
   if (!gameState.player.hand.includes(card)) return; // Card not in hand
+
+  // Immediately reset playable glow when card is played
+  if (card.mesh && card.mesh.material && card.mesh.material.uniforms && card.mesh.material.uniforms.playableGlow) {
+    card.mesh.material.uniforms.playableGlow.value = 0.0;
+  }
 
   gameState.player.mana -= card.data.cost;
   gameState.player.hand = gameState.player.hand.filter(c => c !== card);
@@ -1174,7 +1188,11 @@ const mouse = new THREE.Vector2();
 
 // Throttle helper for performance
 let lastMouseMoveTime = 0;
-const MOUSE_THROTTLE_MS = 16; // ~60fps
+const MOUSE_THROTTLE_MS = 32; // ~30fps for hover (reduces CPU usage)
+
+// Separate throttle for hover animations to prevent rapid triggering
+let lastHoverAnimationTime = 0;
+const HOVER_ANIMATION_THROTTLE_MS = 50;
 
 export function onMouseMove(event) {
   // Throttle mouse move events for performance
@@ -1207,9 +1225,11 @@ export function onMouseMove(event) {
       // Check if card is in hand vs played
       const isInHand = gameState.player.hand.includes(card);
 
-      // Track hover state to prevent repeated animations
-      if (!card._isHovered) {
+      // Track hover state to prevent repeated animations (with throttle)
+      const hoverNow = performance.now();
+      if (!card._isHovered && (hoverNow - lastHoverAnimationTime >= HOVER_ANIMATION_THROTTLE_MS)) {
         card._isHovered = true;
+        lastHoverAnimationTime = hoverNow;
         animateCardHover(card, true, isInHand);
       }
 
@@ -1283,6 +1303,36 @@ export function onMouseUp(event) {
 let lastFrameTime = 0;
 const TARGET_FRAME_TIME = 1000 / 60; // 60fps target
 
+// Update playable glow for cards in hand based on current mana
+function updatePlayableGlow() {
+  const currentMana = gameState.player.mana;
+  const isTurnActive = gameState.isTurnActive && !gameState.isPaused;
+  const time = performance.now() / 1000; // Time in seconds for pulse animation
+
+  for (const card of gameState.player.hand) {
+    if (card.mesh && card.mesh.material && card.mesh.material.uniforms) {
+      const canPlay = isTurnActive && card.data.cost <= currentMana;
+      const targetGlow = canPlay ? 1.0 : 0.0;
+
+      // Smooth transition for the glow
+      const currentGlow = card.mesh.material.uniforms.playableGlow.value;
+      card.mesh.material.uniforms.playableGlow.value = currentGlow + (targetGlow - currentGlow) * 0.15;
+
+      // Update time for pulse animation
+      if (card.mesh.material.uniforms.time) {
+        card.mesh.material.uniforms.time.value = time;
+      }
+    }
+  }
+
+  // Also reset glow for played cards and opponent cards
+  for (const card of [...gameState.player.playedCards, ...gameState.opponent.hand, ...gameState.opponent.playedCards]) {
+    if (card.mesh && card.mesh.material && card.mesh.material.uniforms && card.mesh.material.uniforms.playableGlow) {
+      card.mesh.material.uniforms.playableGlow.value = 0.0;
+    }
+  }
+}
+
 export function animate(currentTime = 0) {
   if (!gameState.isPaused) {
     requestAnimationFrame(animate);
@@ -1298,6 +1348,9 @@ export function animate(currentTime = 0) {
       const targetZ = gameState.draggingCard.mesh.position.z;
       gameState.draggingCard.mesh.position.set(mouse.x * 20, mouse.y * 15, targetZ + 5);
     }
+
+    // Update playable glow for cards in hand
+    updatePlayableGlow();
 
     // Batch card updates for better performance
     const allCards = [

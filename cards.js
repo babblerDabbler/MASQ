@@ -143,6 +143,8 @@ const vertexShader = `
 
 const fragmentShader = `
     uniform sampler2D cardTexture;
+    uniform float playableGlow;
+    uniform float time;
     varying vec2 vUv;
 
     void main() {
@@ -154,6 +156,20 @@ const fragmentShader = `
 
         vec3 glowColor = mix(vec3(1.0, 0.84, 0.0), texColor.rgb, 0.9); // gold glow
         vec3 finalColor = mix(glowColor, texColor.rgb, borderGlow);
+
+        // Green pulsing border glow for playable cards
+        if (playableGlow > 0.01) {
+            // Pulse effect using time
+            float pulse = 0.6 + 0.4 * sin(time * 4.0);
+
+            // Only at the outer border - thin strip
+            float edgeDist = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y));
+            float borderOnly = smoothstep(0.0, 0.02, edgeDist) * (1.0 - smoothstep(0.02, 0.06, edgeDist));
+
+            // Green glow color
+            vec3 greenGlow = vec3(0.0, 1.0, 0.3);
+            finalColor = mix(finalColor, greenGlow, borderOnly * playableGlow * pulse);
+        }
 
         gl_FragColor = vec4(finalColor, texColor.a);
     }
@@ -184,6 +200,8 @@ export class Card {
   const material = new THREE.ShaderMaterial({
     uniforms: {
       cardTexture: { value: this.isPlayer ? texture : cardBackMaterial.map },
+      playableGlow: { value: 0.0 },
+      time: { value: 0.0 },
     },
     vertexShader,
     fragmentShader,

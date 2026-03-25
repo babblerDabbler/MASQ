@@ -2,6 +2,18 @@
 // THREE is loaded globally via CDN
 
 // ============================================================================
+// ACCESSIBILITY: Reduced Motion Support
+// ============================================================================
+
+// Check if user prefers reduced motion
+export const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches || false;
+
+// Shorter durations for users who prefer reduced motion
+export function getAnimationDuration(normalDuration) {
+  return prefersReducedMotion ? Math.min(normalDuration * 0.3, 100) : normalDuration;
+}
+
+// ============================================================================
 // EASING FUNCTIONS
 // ============================================================================
 
@@ -59,15 +71,36 @@ class AnimationManager {
   constructor() {
     this.animations = [];
     this.isRunning = false;
+    this._animationId = 0;
   }
 
   add(animation) {
+    animation.id = ++this._animationId;
     this.animations.push(animation);
     if (!this.isRunning) {
       this.isRunning = true;
       this.update();
     }
     return animation;
+  }
+
+  // Cancel animations by object reference or tag
+  cancel(target, tag = null) {
+    this.animations = this.animations.filter(anim => {
+      if (tag && anim.tag === tag) return false;
+      if (anim.target === target) return false;
+      return true;
+    });
+  }
+
+  // Cancel all animations for a specific card
+  cancelForCard(card) {
+    this.animations = this.animations.filter(anim => anim.card !== card);
+  }
+
+  // Clear all animations
+  clearAll() {
+    this.animations = [];
   }
 
   update() {
@@ -78,6 +111,8 @@ class AnimationManager {
 
     const now = performance.now();
     this.animations = this.animations.filter(anim => {
+      if (anim.cancelled) return false;
+
       const elapsed = now - anim.startTime;
       const progress = Math.min(elapsed / anim.duration, 1);
       const easedProgress = anim.easing(progress);
@@ -206,92 +241,83 @@ export async function animateCardDraw(card, targetPosition, isPlayer = true) {
   await animationManager.animateScale(mesh, 1.0, 100, Easing.easeOutQuad);
 }
 
-// Card play animation - arc to center with spin
-export async function animateCardPlay(card, targetPosition) {
+// Card play animation - smooth arc to board position
+export function animateCardPlay(card, targetPosition) {
   const mesh = card.mesh;
   const startPos = mesh.position.clone();
-  const duration = 400;
+  const startScale = mesh.scale.x;
+  const targetScale = 0.25; // Final board scale
 
-  // Glow effect during play
-  if (mesh.material.uniforms && mesh.material.uniforms.glowIntensity) {
-    mesh.material.uniforms.glowIntensity.value = 1.0;
+  // Reset playable glow immediately when played
+  if (mesh.material.uniforms && mesh.material.uniforms.playableGlow) {
+    mesh.material.uniforms.playableGlow.value = 0.0;
   }
 
-  await animationManager.animate({
-    duration,
-    easing: Easing.easeOutBack,
+  // Single smooth animation to target
+  animationManager.add({
+    card,
+    startTime: performance.now(),
+    duration: 400,
+    easing: Easing.easeOutCubic,
     onUpdate: (progress) => {
-      const t = progress;
-      mesh.position.x = startPos.x + (targetPosition.x - startPos.x) * t;
-      mesh.position.y = startPos.y + (targetPosition.y - startPos.y) * t + Math.sin(t * Math.PI) * 1.5;
-      mesh.position.z = startPos.z + (targetPosition.z - startPos.z) * t + Math.sin(t * Math.PI) * 0.5;
+      // Smooth arc to target position
+      mesh.position.x = startPos.x + (targetPosition.x - startPos.x) * progress;
+      mesh.position.y = startPos.y + (targetPosition.y - startPos.y) * progress + Math.sin(progress * Math.PI) * 1.5;
+      mesh.position.z = startPos.z + (targetPosition.z - startPos.z) * progress;
+
+      // Scale down to board size
+      mesh.scale.setScalar(startScale + (targetScale - startScale) * progress);
 
       // Slight rotation during flight
-      mesh.rotation.z = Math.sin(t * Math.PI * 2) * 0.1;
+      mesh.rotation.z = Math.sin(progress * Math.PI) * 0.1;
+    },
+    onComplete: () => {
+      mesh.rotation.z = 0;
+      mesh.scale.setScalar(targetScale);
+      mesh.position.copy(targetPosition);
     }
   });
-
-  mesh.rotation.z = 0;
-
-  // Fade glow
-  if (mesh.material.uniforms && mesh.material.uniforms.glowIntensity) {
-    animationManager.animate({
-      duration: 300,
-      onUpdate: (progress) => {
-        mesh.material.uniforms.glowIntensity.value = 1.0 - progress;
-      }
-    });
-  }
 }
 
-// Card hover animation
+// Card hover - completely instant, no animation
 export function animateCardHover(card, isHovering, isInHand = true) {
   const mesh = card.mesh;
-  // Larger zoom for cards in hand, bigger for played cards too
+
+  // Cancel any existing animations for this card
+  animationManager.cancelForCard(card);
+
+  // Scale values
   const targetScale = isHovering ? (isInHand ? 2.0 : 0.6) : (isInHand ? 1.0 : 0.25);
   const targetZ = isHovering ? 3.0 : 0.5;
 
-  // Store original position if not stored
+  // Store original position when first hovering
   if (isInHand && isHovering && card._originalY === undefined) {
     card._originalY = mesh.position.y;
     card._originalX = mesh.position.x;
+    card._originalZ = mesh.position.z;
   }
 
-  // Use smooth easing without bounce (easeOutCubic instead of easeOutBack)
-  animationManager.animateScale(mesh, targetScale, 200, Easing.easeOutCubic);
+  // ALL changes are instant - no animation
+  mesh.scale.setScalar(targetScale);
+  mesh.position.z = targetZ;
 
-  // Calculate target position - move towards center when hovering in hand
-  let targetY = card._originalY || mesh.position.y;
-  let targetX = card._originalX || mesh.position.x;
-
-  if (isInHand && isHovering) {
-    // Raise card up and move towards center (reduce X distance from center by 50%)
-    targetY = (card._originalY || mesh.position.y) + 3.5;
-    targetX = (card._originalX || mesh.position.x) * 0.5;
-  }
-
-  // Smooth position animation without bouncing
-  animationManager.animate({
-    duration: 200,
-    easing: Easing.easeOutCubic,
-    onUpdate: (progress) => {
-      // Direct interpolation to target - no cumulative changes
-      const currentZ = mesh.position.z;
-      const currentY = mesh.position.y;
-      const currentX = mesh.position.x;
-
-      mesh.position.z = currentZ + (targetZ - currentZ) * 0.15;
-      if (isInHand) {
-        mesh.position.y = currentY + (targetY - currentY) * 0.15;
-        mesh.position.x = currentX + (targetX - currentX) * 0.15;
-      }
+  if (isInHand) {
+    if (isHovering) {
+      // Move up and towards center instantly
+      mesh.position.y = (card._originalY || mesh.position.y) + 3.5;
+      mesh.position.x = (card._originalX || mesh.position.x) * 0.5;
+    } else if (card._originalY !== undefined) {
+      // Return to original position instantly
+      mesh.position.y = card._originalY;
+      mesh.position.x = card._originalX;
     }
-  });
+  }
 
-  // Reset original position when not hovering
+  // Reset stored position when not hovering
   if (!isHovering && card._originalY !== undefined) {
     delete card._originalY;
     delete card._originalX;
+    delete card._originalZ;
   }
 }
 
@@ -365,6 +391,67 @@ export function screenShake(camera, intensity = 0.3, duration = 300) {
 const damageNumberPool = [];
 const MAX_DAMAGE_NUMBERS = 10;
 
+// Texture cache for damage numbers (reuse textures for same values)
+const damageTextureCache = new Map();
+const MAX_CACHED_TEXTURES = 20;
+
+// Clear all damage numbers (call on game end)
+export function clearDamageNumbers(scene) {
+  damageNumberPool.forEach(sprite => {
+    if (sprite && sprite.parent) {
+      scene.remove(sprite);
+      sprite.material.dispose();
+    }
+  });
+  damageNumberPool.length = 0;
+}
+
+// Clear texture cache (call on game end for memory cleanup)
+export function clearDamageTextureCache() {
+  damageTextureCache.forEach(({ texture }) => texture.dispose());
+  damageTextureCache.clear();
+}
+
+// Get or create cached texture for damage number
+function getDamageTexture(amount, isHeal) {
+  const key = `${isHeal ? '+' : '-'}${amount}`;
+
+  if (damageTextureCache.has(key)) {
+    return damageTextureCache.get(key).texture;
+  }
+
+  // Limit cache size
+  if (damageTextureCache.size >= MAX_CACHED_TEXTURES) {
+    const firstKey = damageTextureCache.keys().next().value;
+    const { texture } = damageTextureCache.get(firstKey);
+    texture.dispose();
+    damageTextureCache.delete(firstKey);
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+
+  ctx.font = 'bold 48px Orbitron';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // Outline
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 4;
+  ctx.strokeText(key, 64, 32);
+
+  // Fill
+  ctx.fillStyle = isHeal ? '#2ecc71' : '#e74c3c';
+  ctx.fillText(key, 64, 32);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  damageTextureCache.set(key, { texture, canvas });
+
+  return texture;
+}
+
 // Create round summary showing total damage and heal with clear spacing
 export function createRoundSummary(scene, playerDamage, playerHeal, opponentDamage, opponentHeal) {
   // Show opponent's damage dealt to player (top left)
@@ -404,29 +491,12 @@ export function createDamageNumber(scene, position, amount, isHeal = false) {
     if (oldSprite && oldSprite.parent) {
       scene.remove(oldSprite);
       oldSprite.material.dispose();
-      oldSprite.material.map.dispose();
+      // Don't dispose cached textures
     }
   }
 
-  const canvas = document.createElement('canvas');
-  canvas.width = 128;
-  canvas.height = 64;
-  const ctx = canvas.getContext('2d');
-
-  ctx.font = 'bold 48px Orbitron';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-
-  // Outline
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = 4;
-  ctx.strokeText((isHeal ? '+' : '-') + amount, 64, 32);
-
-  // Fill
-  ctx.fillStyle = isHeal ? '#2ecc71' : '#e74c3c';
-  ctx.fillText((isHeal ? '+' : '-') + amount, 64, 32);
-
-  const texture = new THREE.CanvasTexture(canvas);
+  // Use cached texture for better performance
+  const texture = getDamageTexture(amount, isHeal);
   const material = new THREE.SpriteMaterial({
     map: texture,
     transparent: true,
@@ -708,9 +778,12 @@ export class ParticleSystem {
 // WIN/LOSS EFFECTS
 // ============================================================================
 
+// Detect mobile for performance adjustments
+const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
 export function createVictoryEffect(scene) {
-  // Gold confetti burst
-  const particleCount = 100;
+  // Reduce particles on mobile for performance
+  const particleCount = isMobile ? 40 : 100;
   const geometry = new THREE.BufferGeometry();
   const positions = new Float32Array(particleCount * 3);
   const colors = new Float32Array(particleCount * 3);
@@ -781,8 +854,8 @@ export function createVictoryEffect(scene) {
 }
 
 export function createDefeatEffect(scene) {
-  // Dark particles falling
-  const particleCount = 50;
+  // Reduce particles on mobile for performance
+  const particleCount = isMobile ? 25 : 50;
   const geometry = new THREE.BufferGeometry();
   const positions = new Float32Array(particleCount * 3);
 
@@ -1011,6 +1084,24 @@ export function initAnimationStyles() {
     @keyframes damageFlash {
       0%, 100% { filter: none; }
       50% { filter: brightness(2) saturate(0) contrast(2); }
+    }
+
+    /* Reduced motion support for accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* GPU acceleration hints for smooth animations */
+    .health-fill, .mana-fill {
+      will-change: width;
+    }
+
+    .timer {
+      will-change: transform, opacity;
     }
   `;
   document.head.appendChild(style);
