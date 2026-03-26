@@ -177,6 +177,251 @@ body {
   text-shadow: 0 0 10px #FFD700;
 }
 
+/* Profile Button & Dropdown */
+.profile-btn-container {
+  position: relative;
+  margin-right: 20px;
+}
+
+.profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(145deg, rgba(43, 43, 43, 0.9), rgba(26, 26, 26, 0.9));
+  border: 1px solid #FFD700;
+  border-radius: 20px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.profile-btn:hover {
+  background: linear-gradient(145deg, rgba(60, 60, 60, 0.9), rgba(43, 43, 43, 0.9));
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+  transform: scale(1.05);
+}
+
+.profile-icon {
+  font-size: 18px;
+}
+
+.profile-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  color: #FFD700;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-dropdown {
+  position: fixed;
+  top: 8vh;
+  right: 20px;
+  background: linear-gradient(145deg, rgba(26, 26, 26, 0.98), rgba(43, 43, 43, 0.95));
+  border: 2px solid #FFD700;
+  border-radius: 12px;
+  padding: 15px;
+  min-width: 220px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.2);
+  z-index: 9999;
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.profile-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+  margin-bottom: 12px;
+}
+
+.profile-dropdown-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #FFD700;
+}
+
+.profile-dropdown-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  color: #FFD700;
+  text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
+.profile-dropdown-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.profile-stat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.profile-stat:hover {
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.profile-stat-icon {
+  font-size: 16px;
+}
+
+.profile-stat-label {
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  flex: 1;
+}
+
+.profile-stat-value {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  color: #FFD700;
+  font-weight: bold;
+}
+
+.profile-dropdown-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.profile-logout-btn {
+  width: 100%;
+  padding: 10px;
+  background: linear-gradient(90deg, #8B0000, #FF0000);
+  border: none;
+  border-radius: 8px;
+  color: #FFF;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.profile-logout-btn:hover {
+  background: linear-gradient(90deg, #FF0000, #FF4500);
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+  transform: scale(1.02);
+}
+
+/* Login Modal */
+.login-modal {
+  position: fixed;
+  top: 8vh;
+  right: 20px;
+  z-index: 9999;
+  pointer-events: auto;
+}
+
+.login-modal-content {
+  background: linear-gradient(145deg, rgba(26, 26, 26, 0.98), rgba(43, 43, 43, 0.95));
+  border: 2px solid #FFD700;
+  border-radius: 12px;
+  padding: 20px;
+  min-width: 250px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.2);
+  animation: dropdownFadeIn 0.2s ease-out;
+  position: relative;
+  pointer-events: auto;
+}
+
+.login-modal-content h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 16px;
+  color: #FFD700;
+  text-align: center;
+  margin-bottom: 15px;
+  text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
+.login-modal-content input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 6px;
+  color: #FFD700;
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  box-sizing: border-box;
+  pointer-events: auto;
+  cursor: text;
+}
+
+.login-modal-content input:focus {
+  border-color: #FFD700;
+  outline: none;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+.login-modal-content input::placeholder {
+  color: rgba(255, 215, 0, 0.5);
+}
+
+.login-modal-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.login-modal-buttons button {
+  flex: 1;
+  padding: 8px 12px;
+  background: linear-gradient(90deg, #2B2B2B, #3C3C3C);
+  border: 1px solid #FFD700;
+  border-radius: 6px;
+  color: #FFD700;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.login-modal-buttons button:hover {
+  background: linear-gradient(90deg, #3C3C3C, #4D4D4D);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.login-modal-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: rgba(255, 215, 0, 0.6);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.login-modal-close:hover {
+  color: #FFD700;
+}
+
 
 /* =============================================================================
    5. BUTTONS - GLOBAL
