@@ -2171,6 +2171,7 @@ button,
 
   .homepage {
     height: 100vh;
+    overflow: hidden;
   }
 
   /* --- LOADING SCREEN MOBILE --- */
@@ -2267,14 +2268,15 @@ button,
 
   /* --- TYPEWRITER MOBILE --- */
   .typewriter-container {
-    margin-top: 4vh;
-    padding: 7.5px; 
+    top: 4vh;
+    padding: 5px 10px;
   }
 
   .typewriter-text {
-    font-size: 7px; 
-    margin: 5px 0; 
+    font-size: 6px;
+    margin: 2px 0;
     text-shadow: 0 0 2.5px #FF0000;
+    line-height: 1.2;
   }
 
   .cursor {
@@ -2283,15 +2285,14 @@ button,
 
   /* --- ANGLED BUTTONS MOBILE --- */
   .angled-btn-group {
-    top: 37.5%; 
+    top: 55%;
     flex-direction: row;
-    gap: 5px; 
-    margin-top: 40vh;
+    gap: 3px;
+    margin-top: 0;
   }
 
   .angled-btn-group li {
-    margin: 5px 0;
-    margin: 0 2vw;
+    margin: 0 1vw;
   }
 
   .angled-btn-group li a {
@@ -2339,12 +2340,20 @@ button,
 
   /* --- CLICKABLE WORD MOBILE --- */
   .clickable-word {
-    font-size: 10px; 
-    bottom: 2.5px; 
+    font-size: 8px;
+    bottom: 5px;
   }
 
   .clickable-word span {
-    margin: 0 5px; 
+    margin: 0 3px;
+  }
+
+  .masq-navbar {
+    gap: 10px;
+  }
+
+  .nav-link {
+    font-size: 8px;
   }
 
   .clickable-word span:hover {
@@ -2824,16 +2833,28 @@ button,
     border-width: 1.5px;
   }
 
+  /* --- CARD CONTAINER MOBILE --- */
+  #card-container {
+    top: 40%;
+    width: 100px;
+    height: 150px;
+  }
+
+  .card {
+    width: 60%;
+    height: 60%;
+  }
+
   /* --- NOTIFICATION WIDGET MOBILE --- */
   #notification-widget {
-    width: 60px; 
-    bottom: 40px; 
-    right: 10px; 
-    font-size: 0.2rem; 
-    padding: 4px; 
+    width: 50px;
+    bottom: 25px;
+    right: 5px;
+    font-size: 0.15rem;
+    padding: 3px;
     border-width: 0.5px;
-    border-radius: 8px; 
-    box-shadow: 0 0 5px rgba(255, 215, 0, 0.25); 
+    border-radius: 6px;
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.25);
   }
 
   #notification-title {
